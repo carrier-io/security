@@ -33,7 +33,7 @@ class Module(module.ModuleModel):
         self.root_path = root_path
         self.context = context
 
-        def init(self):
+    def init(self):
         """ Init module """
         log.info("Initializing module Security")
         init_db()
