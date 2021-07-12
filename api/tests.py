@@ -1,6 +1,7 @@
-from sqlalchemy import and_
 from uuid import uuid4
 from json import loads
+
+from sqlalchemy import and_
 
 from ...shared.utils.restApi import RestResource
 from ...shared.utils.api_utils import build_req_parser, get
@@ -118,12 +119,12 @@ class SecurityTestsApi(RestResource):
             security_results.insert()
 
             event = []
+            test.results_test_id = security_results.id
+            test.commit()
             event.append(test.configure_execution_json("cc"))
 
             response = exec_test(project.id, event)
 
-            # security_results.set_test_status("Finished")
-
             return response
 
-        return test.to_json(exclude_fields=("id",))
+        return test.to_json()
