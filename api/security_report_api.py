@@ -4,9 +4,9 @@ from sqlalchemy import and_, or_
 
 from ...shared.utils.restApi import RestResource
 from ...shared.utils.api_utils import build_req_parser
-from ...project.models.project import Project
-from ...project.models.statistics import Statistic
-from ...project.models.quota import ProjectQuota
+from ...projects.models.project import Project
+from ...projects.models.statistics import Statistic
+from ...projects.models.quota import ProjectQuota
 
 from ..models.security_reports import SecurityReport
 from ..models.security_results import SecurityResultsDAST
