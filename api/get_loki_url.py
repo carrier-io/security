@@ -36,7 +36,8 @@ class GetLokiUrl(RestResource):
 
         # TODO: probably need to rename params
         # logs_query = "{" + f'task_key="{key}"' + "}"
-        logs_query = "{" + f'task_key="{key}"&result_test_id="{result_key}"&project_id="{project_id}"' + "}"
+        # logs_query = "{" + f'task_key="{key}"&result_test_id="{result_key}"&project_id="{project_id}"' + "}"
+        logs_query = "{" + f'task_key="{key}",result_test_id="{result_key}",project_id="{project_id}"' + "}"
 
         # TODO: Uncomment or re-write when all settings will be ready
         # state = self._get_task_state()

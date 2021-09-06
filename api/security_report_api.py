@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, desc
 
 from ...shared.utils.restApi import RestResource
 from ...shared.utils.api_utils import build_req_parser
@@ -102,11 +102,16 @@ class SecurityReportAPI(RestResource):
         elif args["scan_type"].lower() == 'dast':
             if not ProjectQuota.check_quota(project_id=project_id, quota='dast_scans'):
                 return {"Forbidden": "The number of dast scans allowed in the project has been exceeded"}
-        report = SecurityResultsDAST(
+
+
+        # monkey patch security results getter
+        report = SecurityResultsDAST.query.filter(SecurityResultsDAST.project_id == project_id).order_by(desc(SecurityResultsDAST.id)).first()
+
+        upd = dict(
             scan_time=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-            project_id=project.id,
+            # project_id=project.id,
             scan_duration=args["scan_time"],
-            project_name=args["project_name"],
+            # project_name=args["project_name"],
             app_name=args["app_name"],
             dast_target=args["dast_target"],
             sast_code=args["sast_code"],
@@ -117,7 +122,11 @@ class SecurityReportAPI(RestResource):
             info_findings=args["info_findings"],
             environment=args["environment"]
         )
-        report.insert()
+
+        for k, v in upd.items():
+            setattr(report, k, v)
+
+        report.commit()
 
         statistic = Statistic.query.filter_by(project_id=project_id).first()
         if args["scan_type"].lower() == 'sast':
