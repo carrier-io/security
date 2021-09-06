@@ -16,7 +16,8 @@ class SecurityReport(AbstractBaseMixin, Base):
     severity = Column(String(16), unique=False)
     details = Column(Integer, unique=False)
     endpoints = Column(Text, unique=False)
-    # false_positive = Column(Integer, unique=False)
-    # info_finding = Column(Integer, unique=False)
-    # excluded_finding = Column(Integer, unique=False)
     status = Column(String(16), unique=False)
+    # TODO: delete rows below if needed
+    false_positive = Column(Integer, unique=False)
+    info_finding = Column(Integer, unique=False)
+    excluded_finding = Column(Integer, unique=False)

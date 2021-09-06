@@ -1,10 +1,9 @@
 from sqlalchemy import and_, func
 
-from ..models.security_results import SecurityResultsDAST
-from ..models.security_reports import SecurityReport
-
 from ...shared.utils.restApi import RestResource
 from ...shared.utils.api_utils import build_req_parser
+from ..models.security_results import SecurityResultsDAST
+from ..models.security_reports import SecurityReport
 
 
 class TestStatusUpdater(RestResource):
