@@ -92,12 +92,23 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
                     )
 
             reporters_config = dict()
-            reporters_config["loki"] = {
-                "project_id": self.project_id,
-                "test_id": self.id,
-                "result_id": self.results_test_id,
-                "url": loki_settings["url"]
+            reporters_config["centry_loki"] = {
+                "url": loki_settings["url"],
+                "labels": {
+                    "project_id": str(self.project_id),
+                    "task_key": str(self.id),
+                    "result_test_id": str(self.results_test_id),
+                },
             }
+            reporters_config["centry_status"] = {
+                "url": unsecret(
+                    "{{secret.galloper_url}}",
+                    project_id=self.project_id
+                ),
+                "project_id": str(self.project_id),
+                "test_id": str(self.results_test_id),
+            }
+
 
             reporters_config["galloper"] = {
                 "url": unsecret(
@@ -199,8 +210,24 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
                             "build_id": self.test_uid,
                             "dast": global_dast_settings
                         },
+                        "actions": {
+                            "git_clone": {
+                                "source": "https://github.com/carrier-io/galloper.git",
+                                "target": "/tmp/code",
+                                "branch": "master",
+                            }
+                        },
                         "scanners": {
-                            "dast": scanners_config
+                            # "dast": scanners_config,
+                            # "dast": {"nmap": {
+                            #     "target": "http://scanme.nmap.org/",
+                            #     "include_ports": "22,80,443"
+                            # }},
+                            "sast": {
+                                "python": {
+                                    "code": "/tmp/code",
+                                },
+                            },
                         },
                         "processing": {
                             "min_severity_filter": {
@@ -239,7 +266,10 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
             return dusty_config
 
         job_type = "dast"
-        container = f"getcarrier/{job_type}:{CURRENT_RELEASE}"
+        # job_type = "sast"
+
+        # container = f"getcarrier/{job_type}:{CURRENT_RELEASE}"
+        container = f"getcarrier/sast:latest"
         parameters = {
             "cmd": f"run -b galloper:{job_type}_{self.test_uid} -s {job_type}",
             "GALLOPER_URL": unsecret(

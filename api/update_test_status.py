@@ -1,3 +1,7 @@
+from io import BytesIO
+
+import requests
+from flask import current_app
 from sqlalchemy import and_, func
 
 from ...shared.utils.restApi import RestResource
@@ -23,7 +27,7 @@ class TestStatusUpdater(RestResource):
         test_status = args.get("test_status")
 
         if not test_status:
-            return {"message": "There's no enough parameters"}, 400
+            return {"message": "There's not enough parameters"}, 400
 
         if isinstance(test_id, int):
             _filter = and_(
@@ -62,4 +66,25 @@ class TestStatusUpdater(RestResource):
                 setattr(test, status[0].lower().replace(" ", "_"), status[1])
             test.commit()
 
+            write_test_run_logs_to_minio_bucket(test)
+
         return {"message": f"Status for test_id={test_id} of project_id: {project_id} updated"}, 200
+
+
+def write_test_run_logs_to_minio_bucket(test, file_name='log.txt'):
+    loki_url = current_app.config["CONTEXT"].settings.get('loki', {}).get('url')
+    if loki_url:
+        loki_url = loki_url.replace('/push', '/query_range?query={result_test_id="%s"}' % test.id)
+        response = requests.get(loki_url)
+        if response.ok:
+            results = response.json()
+            enc = 'utf-8'
+            file_output = BytesIO()
+
+            file_output.write(f'Test run {test.test_id} log:\n'.encode(enc))
+            for i in results['data']['result']:
+                for timestamp, log_line in i['values']:
+                    file_output.write(f'{timestamp}\t{log_line}\n'.encode(enc))
+            minio_client = test.get_minio_client()
+            file_output.seek(0)
+            minio_client.upload_file(test.bucket_name, file_output, file_name)

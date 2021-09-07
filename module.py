@@ -21,8 +21,10 @@
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 from pylon.core.tools import module  # pylint: disable=E0611,E0401
 
-from ..shared.utils.api_utils import add_resource_to_api
 from .init_db import init_db
+from .rpc import security_results_or_404
+
+from ..shared.utils.api_utils import add_resource_to_api
 
 
 class Module(module.ModuleModel):
@@ -41,7 +43,7 @@ class Module(module.ModuleModel):
         from .api.test import SecurityTestApi
         from .api.security_results_api import SecurityResultsApi
         from .api.security_dispatcher import SecuritySeedDispatcher
-        from .api.security_findings_api import FindingsAPI
+        from .api.security_findings_api import FindingsAPI, SecurityResultsApiTemp
         from .api.update_test_status import TestStatusUpdater
         from .api.get_loki_url import GetLokiUrl
         from .api.security_report_api import SecurityReportAPI
@@ -81,6 +83,14 @@ class Module(module.ModuleModel):
             self.context.api, SecurityReportAPI,
             "/security/<int:project_id>"
         )
+
+        add_resource_to_api(
+            self.context.api, SecurityResultsApiTemp,
+            "/security/<int:project_id>/finding"
+        )
+
+
+        self.context.rpc_manager.register_function(security_results_or_404, name='security_results_or_404')
 
     def deinit(self):  # pylint: disable=R0201
         """ De-init module """
