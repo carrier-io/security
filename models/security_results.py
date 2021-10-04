@@ -1,13 +1,15 @@
 import string
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 
 from sqlalchemy import String, Column, Integer, JSON, DateTime, ARRAY
 
 from ...shared.db_manager import Base
 from ...shared.models.abstract_base import AbstractBaseMixin
+from ...shared.utils.rpc import RpcMixin
+from ...shared.connectors.minio import MinioClient
 
 
-class SecurityResultsDAST(AbstractBaseMixin, Base):
+class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
     __tablename__ = "security_results_dast"
 
     # TODO: excluded = ignored
@@ -64,13 +66,26 @@ class SecurityResultsDAST(AbstractBaseMixin, Base):
         valid_chars = "_%s%s" % (string.ascii_letters, string.digits)
         return ''.join(c for c in val if c in valid_chars)
 
+    @property
+    def bucket_name(self):
+        return f'run--{self.id}'
+
+    def get_minio_client(self) -> MinioClient:
+        return MinioClient(self.rpc.call.project_get_or_404(self.project_id))
+
     def insert(self):
         super().insert()
+        # minio part
+        minio_client = self.get_minio_client()
+        minio_client.create_bucket(bucket=self.bucket_name)
+        # if created:
+        #     minio_client.configure_bucket_lifecycle(self.bucket_name, 7)
+
+
 
     def to_json(self, exclude_fields: tuple = ()) -> dict:
         test_param = super().to_json(exclude_fields)
 
-        from datetime import timedelta
         test_param["name"] = test_param.pop("test_name")
         if test_param["duration"]:
             test_param["ended_date"] = str(test_param["start_date"] + timedelta(seconds=float(test_param["duration"])))
