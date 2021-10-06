@@ -43,7 +43,7 @@ class Module(module.ModuleModel):
         from .api.test import SecurityTestApi
         from .api.security_results_api import SecurityResultsApi
         from .api.security_dispatcher import SecuritySeedDispatcher
-        from .api.security_findings_api import FindingsAPI, SecurityResultsApiTemp
+        from .api.security_findings_api import FindingsAPI
         from .api.update_test_status import TestStatusUpdater
         from .api.get_loki_url import GetLokiUrl
         from .api.security_report_api import SecurityReportAPI
@@ -72,7 +72,8 @@ class Module(module.ModuleModel):
         )
         add_resource_to_api(
             self.context.api, FindingsAPI,
-            "/security/<int:project_id>/findings/<int:test_id>"
+            "/security/<int:project_id>/findings/<int:test_id>",
+            "/security/<int:project_id>/finding"
         )
         add_resource_to_api(
             self.context.api, TestStatusUpdater,
@@ -83,12 +84,6 @@ class Module(module.ModuleModel):
             self.context.api, SecurityReportAPI,
             "/security/<int:project_id>"
         )
-
-        add_resource_to_api(
-            self.context.api, SecurityResultsApiTemp,
-            "/security/<int:project_id>/finding"
-        )
-
 
         self.context.rpc_manager.register_function(security_results_or_404, name='security_results_or_404')
 
