@@ -61,7 +61,6 @@ class FindingsAPI(RestResource):
         filter_ = and_(*filter_)
         # issues = SecurityReport.query.filter(filter_).all()
         issues = SecurityReport.query.filter(filter_).order_by(asc(SecurityReport.id))
-        print(issues, project_id, test_id)
         results = []
         for issue in issues:
             _res = issue.to_json()
@@ -181,11 +180,6 @@ class FindingsAPI(RestResource):
         )
         SecurityResultsDAST.commit()
         return accept_message
-
-
-
-from flask_restful import Resource
-class SecurityResultsApiTemp(Resource):
 
     def post(self, project_id: int):
         finding_db = None

@@ -1,4 +1,5 @@
 from io import BytesIO
+from urllib.parse import urlunparse, urlparse
 
 import requests
 from flask import current_app
@@ -72,9 +73,16 @@ class TestStatusUpdater(RestResource):
 
 
 def write_test_run_logs_to_minio_bucket(test, file_name='log.txt'):
-    loki_url = current_app.config["CONTEXT"].settings.get('loki', {}).get('url')
-    if loki_url:
-        loki_url = loki_url.replace('/push', '/query_range?query={result_test_id="%s"}' % test.id)
+    loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))
+    if loki_settings_url:
+        loki_url = urlunparse((
+            loki_settings_url.scheme,
+            loki_settings_url.netloc,
+            '/loki/api/v1/query_range',
+            None,
+            'query={result_test_id="133"}',
+            None
+        ))
         response = requests.get(loki_url)
         if response.ok:
             results = response.json()
