@@ -46,7 +46,7 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
     info = Column(Integer, unique=False, default=0)
     # other
     # excluded = Column(Integer, unique=False)
-    tags = Column(ARRAY(String))
+    tags = Column(ARRAY(String), default=[])
     test_status = Column(
         JSON,
         default={
