@@ -29,18 +29,25 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
     project_id = Column(Integer, unique=False, nullable=False)
     project_name = Column(String(64), nullable=False)
     test_uid = Column(String(128), unique=True, nullable=False)
+
     name = Column(String(128), nullable=False)
-    test_environment = Column(String(128), nullable=False)
+    description = Column(String(256), nullable=True, unique=False)
+
     urls_to_scan = Column(ARRAY(String(128)), nullable=False)
     urls_exclusions = Column(ARRAY(String(128)))
-    reporting = Column(
-        ARRAY(JSON),
-        # nullable=False
-    )
-    scanners_cards = Column(JSON)  # {<scanner>: {<scanner_params>}, ...}
+    scan_location = Column(String(128), nullable=False)
+    test_parameters = Column(JSON, nullable=True)
+    integrations = Column(JSON, nullable=True)
+
+    # test_environment = Column(String(128), nullable=False)
+    # reporting = Column(
+    #     ARRAY(JSON),
+    #     # nullable=False
+    # )
+    # scanners_cards = Column(JSON)  # {<scanner>: {<scanner_params>}, ...}
     processing = Column(JSON)  # {<processing_card>: <value>, }
 
-    region = Column(String(128), nullable=False, default="default")
+    # region = Column(String(128), nullable=False, default="default")
     # TODO: add relationship with DASTtestsResults table
     results_test_id = Column(Integer)
     # bucket = Column(String(128), nullable=False)
@@ -56,8 +63,8 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
         valid_chars = "_%s%s" % (string.ascii_letters, string.digits)
         return ''.join(c for c in val if c in valid_chars)
 
-    def insert(self):
-        super().insert()
+    # def insert(self):
+    #     super().insert()
 
     def configure_execution_json(
             self,
@@ -313,15 +320,17 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
                 "container": container,
                 "execution_params": dumps(parameters),
                 "cc_env_vars": cc_env_vars,
-                "channel": self.region
+                # "channel": self.region
+                "channel": self.scan_location
             }
-            if "quality" in self.scanners_cards:
-                execution_json["quality_gate"] = "True"
+            # todo: scanner_cards no longer present
+            # if "quality" in self.scanners_cards:
+            #     execution_json["quality_gate"] = "True"
             return execution_json
 
         return ""
 
     def to_json(self, exclude_fields: tuple = ()) -> dict:
         test_param = super().to_json(exclude_fields)
-        test_param["tools"] = ",".join(test_param["scanners_cards"].keys())
+        # test_param["tools"] = ",".join(test_param["scanners_cards"].keys())
         return test_param
