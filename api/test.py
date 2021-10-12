@@ -8,7 +8,7 @@ from ...shared.utils.api_utils import build_req_parser
 from ..models.api_tests import SecurityTestsDAST
 from ..models.security_results import SecurityResultsDAST
 from ..models.security_reports import SecurityReport
-from .utils import exec_test
+from .utils import exec_test, format_test_parameters
 
 
 class SecurityTestApi(RestResource):
@@ -17,14 +17,18 @@ class SecurityTestApi(RestResource):
     )
 
     _put_rules = (
-        dict(name="name", type=str, location='form'),
-        dict(name="test_env", type=str, location='form'),
-        dict(name="urls_to_scan", type=str, location='form'),
-        dict(name="urls_exclusions", type=str, location='form'),
-        dict(name="scanners_cards", type=str, location='form'),
+        dict(name="name", type=str, location='json'),
+        dict(name="description", type=str, location='json'),
+        # dict(name="test_env", type=str, location='form'),
+        dict(name="parameters", type=str, location='json'),
+        dict(name="integrations", type=str, location='json'),
+        # dict(name="urls_to_scan", type=str, location='json'),
+        # dict(name="urls_exclusions", type=str, location='json'),
+
+        # dict(name="scanners_cards", type=str, location='form'),
         # dict(name="reporting_cards", type=str, location='form'),
-        dict(name="reporting", type=str, location='form'),
-        dict(name="processing", type=str, location='form')
+        # dict(name="reporting", type=str, location='form'),
+        dict(name="processing", type=str, location='json')
     )
 
     def __init__(self):
@@ -74,14 +78,27 @@ class SecurityTestApi(RestResource):
             )
         task = SecurityTestsDAST.query.filter(_filter)
 
+        print('EDIT ARGS', args)
+        test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
+        urls_to_scan = [test_parameters.pop('url to scan')]
+        urls_exclusions = test_parameters.pop('exclusions').split(',')
+        scan_location = test_parameters.pop('scan location')
+        integrations = loads(args['integrations'].replace("'", '"'))
+        processing = loads(args['processing'].replace("'", '"'))
+
         update_values = {
             "name": args["name"],
-            "test_environment": args["test_env"],
-            "urls_to_scan": loads(args["urls_to_scan"]),
-            "urls_exclusions": loads(args["urls_exclusions"]),
-            "scanners_cards": loads(args["scanners_cards"]),
-            "reporting": loads(args["reporting"]),
-            "processing": loads(args["processing"])
+            'description': args['description'],
+
+            # "test_environment": args["test_env"],
+            "urls_to_scan": urls_to_scan,
+            "urls_exclusions": urls_exclusions,
+            'scan_location': scan_location,
+            'test_parameters': test_parameters,
+            'integrations': integrations,
+            # "scanners_cards": loads(args["scanners_cards"]),
+            # "reporting": loads(args["reporting"]),
+            "processing": processing
         }
 
         task.update(update_values)
