@@ -14,18 +14,24 @@ def exec_test(project_id, event):
 
 
 def format_test_parameters(test_parameters: list) -> dict:
+    print('TP', test_parameters)
     result = dict()
-    # print('TP', test_parameters)
-    # print('TP', type(test_parameters))
-    # import json
-    # print('TP', json.loads(test_parameters.replace("'", '"')))
-    # print('TP', type(json.loads(test_parameters.replace("'", '"'))))
+    item_value_key = 'default'
     for i in test_parameters:
-        # print('III', i)
-        name = i.pop('name').lower()
-        # data = dict()
-        # for k, v in i.items():
-        #     if not k.startswith('_'):
-        #         data[k] = v
-        result[name] = i['default']
+        name = i.get('name').lower()
+
+        for k in set(i.keys()):
+            if k.startswith('_'):
+                del i[k]
+
+        data_type = i.get('type', '').lower()
+        if data_type == 'list':
+            i[item_value_key] = [x.strip() for x in i[item_value_key].split(',')]
+        elif data_type in ('integer', 'number'):
+            i[item_value_key] = float(i[item_value_key])
+        elif data_type in ('string', ''):
+            i[item_value_key] = i[item_value_key].strip()
+
+        result[name] = i
+    print('AND RESULT IS', result)
     return result

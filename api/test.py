@@ -80,9 +80,10 @@ class SecurityTestApi(RestResource):
 
         print('EDIT ARGS', args)
         test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
-        urls_to_scan = [test_parameters.pop('url to scan')]
-        urls_exclusions = test_parameters.pop('exclusions').split(',')
-        scan_location = test_parameters.pop('scan location')
+        urls_to_scan = [test_parameters.pop('url to scan').get('default')]
+        urls_exclusions = test_parameters.pop('exclusions').get('default', [])
+        scan_location = test_parameters.pop('scan location').get('default', '')
+
         integrations = loads(args['integrations'].replace("'", '"'))
         processing = loads(args['processing'].replace("'", '"'))
 
@@ -94,7 +95,7 @@ class SecurityTestApi(RestResource):
             "urls_to_scan": urls_to_scan,
             "urls_exclusions": urls_exclusions,
             'scan_location': scan_location,
-            'test_parameters': test_parameters,
+            'test_parameters': test_parameters.values(),
             'integrations': integrations,
             # "scanners_cards": loads(args["scanners_cards"]),
             # "reporting": loads(args["reporting"]),
