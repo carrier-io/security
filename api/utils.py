@@ -14,10 +14,11 @@ def exec_test(project_id, event):
 
 
 def format_test_parameters(test_parameters: list) -> dict:
-    print('TP', test_parameters)
+    # print('TP', test_parameters)
     result = dict()
     item_value_key = 'default'
     for i in test_parameters:
+        # print('i[item_value_key]', type(i[item_value_key]), i[item_value_key])
         name = i.get('name').lower()
 
         for k in set(i.keys()):
@@ -26,12 +27,15 @@ def format_test_parameters(test_parameters: list) -> dict:
 
         data_type = i.get('type', '').lower()
         if data_type == 'list':
-            i[item_value_key] = [x.strip() for x in i[item_value_key].split(',')]
+            if not isinstance(i[item_value_key], list):
+                i[item_value_key] = [x.strip() for x in i[item_value_key].split(',')]
         elif data_type in ('integer', 'number'):
             i[item_value_key] = float(i[item_value_key])
         elif data_type in ('string', ''):
+            if isinstance(i[item_value_key], list):
+                i[item_value_key] = ','.join(i[item_value_key])
             i[item_value_key] = i[item_value_key].strip()
 
         result[name] = i
-    print('AND RESULT IS', result)
+    # print('AND RESULT IS', result)
     return result
