@@ -76,7 +76,7 @@ class SecurityTestsApi(RestResource):
         Post method for creating and running test
         """
         args = self.post_parser.parse_args(strict=False)
-        # print('ARGS', args)
+        print('ARGS', args)
 
         run_test = args.pop("run_test")
         test_uid = str(uuid4())
@@ -84,9 +84,10 @@ class SecurityTestsApi(RestResource):
         project = self.rpc.project_get_or_404(project_id=project_id)
 
         test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
-        urls_to_scan = [test_parameters.pop('url to scan')]
-        urls_exclusions = test_parameters.pop('exclusions').split(',')
-        scan_location = test_parameters.pop('scan location')
+        urls_to_scan = [test_parameters.pop('url to scan').get('default')]
+        urls_exclusions = test_parameters.pop('exclusions').get('default', [])
+        scan_location = test_parameters.pop('scan location').get('default', '')
+
         integrations = loads(args['integrations'].replace("'", '"'))
         processing = loads(args['processing'].replace("'", '"'))
 
@@ -100,7 +101,7 @@ class SecurityTestsApi(RestResource):
             urls_to_scan=urls_to_scan,
             urls_exclusions=urls_exclusions,
             scan_location=scan_location,
-            test_parameters=test_parameters,
+            test_parameters=test_parameters.values(),
             integrations=integrations,
             # scanners_cards=loads(args["scanners_cards"]),
             # reporting=loads(args["reporting"]),

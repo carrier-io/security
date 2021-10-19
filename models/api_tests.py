@@ -36,7 +36,7 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
     urls_to_scan = Column(ARRAY(String(128)), nullable=False)
     urls_exclusions = Column(ARRAY(String(128)))
     scan_location = Column(String(128), nullable=False)
-    test_parameters = Column(JSON, nullable=True)
+    test_parameters = Column(ARRAY(JSON), nullable=True)
     integrations = Column(JSON, nullable=True)
 
     # test_environment = Column(String(128), nullable=False)
