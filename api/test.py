@@ -1,5 +1,6 @@
 from json import loads
 
+from flask_restful import abort
 from sqlalchemy import and_
 
 from ...shared.utils.restApi import RestResource
@@ -8,7 +9,7 @@ from ...shared.utils.api_utils import build_req_parser
 from ..models.api_tests import SecurityTestsDAST
 from ..models.security_results import SecurityResultsDAST
 from ..models.security_reports import SecurityReport
-from .utils import exec_test, format_test_parameters
+from .utils import exec_test, format_test_parameters, ValidationError
 
 
 class SecurityTestApi(RestResource):
@@ -19,16 +20,10 @@ class SecurityTestApi(RestResource):
     _put_rules = (
         dict(name="name", type=str, location='json'),
         dict(name="description", type=str, location='json'),
-        # dict(name="test_env", type=str, location='form'),
         dict(name="parameters", type=str, location='json'),
         dict(name="integrations", type=str, location='json'),
-        # dict(name="urls_to_scan", type=str, location='json'),
-        # dict(name="urls_exclusions", type=str, location='json'),
-
-        # dict(name="scanners_cards", type=str, location='form'),
-        # dict(name="reporting_cards", type=str, location='form'),
-        # dict(name="reporting", type=str, location='form'),
-        dict(name="processing", type=str, location='json')
+        dict(name="processing", type=str, location='json'),
+        dict(name="run_test", type=bool, location='json'),
     )
 
     def __init__(self):
@@ -66,6 +61,46 @@ class SecurityTestApi(RestResource):
     def put(self, project_id, test_id):
         """ Update test data """
         args = self.put_parser.parse_args(strict=False)
+        print('EDIT ARGS', args)
+        run_test = args.pop("run_test")
+
+        errors = []
+
+        test_name = args.get('name', None)
+        if not test_name:
+            errors.append({
+                'field': 'name',
+                'feedback': 'Is required'
+            })
+
+        try:
+            test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
+            urls_to_scan = [test_parameters.pop('url to scan').get('default')]
+            urls_exclusions = test_parameters.pop('exclusions').get('default', [])
+            scan_location = test_parameters.pop('scan location').get('default', '')
+        except ValidationError as e:
+            errors.append({
+                'field': 'parameters',
+                'feedback': e.data
+            })
+
+        integrations = loads(args['integrations'].replace("'", '"'))
+        processing = loads(args['processing'].replace("'", '"'))
+
+        if errors:
+            return abort(400, data=errors)
+
+        update_values = {
+            "name": test_name,
+            'description': args['description'],
+            "urls_to_scan": urls_to_scan,
+            "urls_exclusions": urls_exclusions,
+            'scan_location': scan_location,
+            'test_parameters': test_parameters.values(),
+            'integrations': integrations,
+            "processing": processing
+        }
+
         project = self.rpc.project_get_or_404(project_id=project_id)
 
         if isinstance(test_id, int):
@@ -76,34 +111,30 @@ class SecurityTestApi(RestResource):
             _filter = and_(
                 SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.test_uid == test_id
             )
-        task = SecurityTestsDAST.query.filter(_filter)
+        test = SecurityTestsDAST.query.filter(_filter)
 
-        print('EDIT ARGS', args)
-        test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
-        urls_to_scan = [test_parameters.pop('url to scan').get('default')]
-        urls_exclusions = test_parameters.pop('exclusions').get('default', [])
-        scan_location = test_parameters.pop('scan location').get('default', '')
-
-        integrations = loads(args['integrations'].replace("'", '"'))
-        processing = loads(args['processing'].replace("'", '"'))
-
-        update_values = {
-            "name": args["name"],
-            'description': args['description'],
-
-            # "test_environment": args["test_env"],
-            "urls_to_scan": urls_to_scan,
-            "urls_exclusions": urls_exclusions,
-            'scan_location': scan_location,
-            'test_parameters': test_parameters.values(),
-            'integrations': integrations,
-            # "scanners_cards": loads(args["scanners_cards"]),
-            # "reporting": loads(args["reporting"]),
-            "processing": processing
-        }
-
-        task.update(update_values)
+        test.update(update_values)
         SecurityTestsDAST.commit()
+
+        test = test.first()
+        print('GOT TEST', test)
+        if run_test:
+            security_results = SecurityResultsDAST(
+                project_id=project.id,
+                test_id=test.id,
+                test_uid=test.test_uid,
+                test_name=test.name
+            )
+            security_results.insert()
+
+            event = []
+            test.results_test_id = security_results.id
+            test.commit()
+            event.append(test.configure_execution_json("cc"))
+
+            response = exec_test(project.id, event)
+
+            return response
 
         return {"message": "Parameters for test were updated"}
 

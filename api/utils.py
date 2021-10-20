@@ -13,11 +13,18 @@ def exec_test(project_id, event):
     return response
 
 
+class ValidationError(Exception):
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+
+
 def format_test_parameters(test_parameters: list) -> dict:
-    # print('TP', test_parameters)
+    REQUIRED_PARAMETERS = set(i.lower() for i in ['URL to scan'])
     result = dict()
+    errors = dict()
     item_value_key = 'default'
-    for i in test_parameters:
+    for index, i in enumerate(test_parameters):
         # print('i[item_value_key]', type(i[item_value_key]), i[item_value_key])
         name = i.get('name').lower()
 
@@ -30,12 +37,23 @@ def format_test_parameters(test_parameters: list) -> dict:
             if not isinstance(i[item_value_key], list):
                 i[item_value_key] = [x.strip() for x in i[item_value_key].split(',')]
         elif data_type in ('integer', 'number'):
-            i[item_value_key] = float(i[item_value_key])
+            try:
+                if isinstance(i[item_value_key], list):
+                    i[item_value_key] = float(i[item_value_key][0])
+                else:
+                    i[item_value_key] = float(i[item_value_key])
+            except ValueError as e:
+                errors[index] = str(e)
         elif data_type in ('string', ''):
             if isinstance(i[item_value_key], list):
                 i[item_value_key] = ','.join(i[item_value_key])
             i[item_value_key] = i[item_value_key].strip()
 
+        if name in REQUIRED_PARAMETERS and not i[item_value_key]:
+            errors[index] = f'{name} is required'
+
         result[name] = i
     # print('AND RESULT IS', result)
+    if errors:
+        raise ValidationError(errors)
     return result
