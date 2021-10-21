@@ -1,6 +1,7 @@
 from uuid import uuid4
 from json import loads
 
+from flask_restful import abort
 from sqlalchemy import and_
 
 from ...shared.utils.restApi import RestResource
@@ -9,7 +10,7 @@ from ...shared.utils.api_utils import build_req_parser, get, str2bool
 from ..models.api_tests import SecurityTestsDAST
 from ..models.security_results import SecurityResultsDAST
 from ..models.security_thresholds import SecurityThresholds
-from .utils import exec_test, format_test_parameters
+from .utils import exec_test, format_test_parameters, ValidationError
 
 
 class SecurityTestsApi(RestResource):
@@ -29,15 +30,8 @@ class SecurityTestsApi(RestResource):
 
         dict(name="parameters", type=str, location='json'),
         dict(name="integrations", type=str, location='json'),
-        # dict(name="project_name", type=str, location='form'),
-        # dict(name="test_env", type=str, location='form'),
-        # dict(name="urls_to_scan", type=str, location='form'),
-        # dict(name="urls_exclusions", type=str, location='form'),
-        # dict(name="scanners_cards", type=str, location='form'),
-        # dict(name="reporting_cards", type=str, location='form'),
-        # dict(name="reporting", type=str, location='form'),
         dict(name="processing", type=str, location='json'),
-        dict(name="run_test", type=str2bool, location='json'),
+        dict(name="run_test", type=bool, location='json'),
     )
 
     _delete_rules = (
@@ -76,26 +70,42 @@ class SecurityTestsApi(RestResource):
         Post method for creating and running test
         """
         args = self.post_parser.parse_args(strict=False)
-        print('ARGS', args)
-
+        # print('ARGS', args)
         run_test = args.pop("run_test")
-        test_uid = str(uuid4())
+
+        errors = []
+        test_name = args.get('name', None)
+        if not test_name:
+            errors.append({
+                'field': 'name',
+                'feedback': 'Test name is required'
+            })
 
         project = self.rpc.project_get_or_404(project_id=project_id)
 
-        test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
-        urls_to_scan = [test_parameters.pop('url to scan').get('default')]
-        urls_exclusions = test_parameters.pop('exclusions').get('default', [])
-        scan_location = test_parameters.pop('scan location').get('default', '')
+        try:
+            test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
+            urls_to_scan = [test_parameters.pop('url to scan').get('default')]
+            urls_exclusions = test_parameters.pop('exclusions').get('default', [])
+            scan_location = test_parameters.pop('scan location').get('default', '')
+        except ValidationError as e:
+            errors.append({
+                'field': 'parameters',
+                'feedback': e.data
+            })
 
         integrations = loads(args['integrations'].replace("'", '"'))
         processing = loads(args['processing'].replace("'", '"'))
 
+        if errors:
+            return abort(400, data=errors)
+
+        test_uid = str(uuid4())
         test = SecurityTestsDAST(
             project_id=project.id,
             project_name=project.name,
             test_uid=test_uid,
-            name=args["name"],
+            name=test_name,
             description=args['description'],
             # test_environment=args["test_env"],
             urls_to_scan=urls_to_scan,
