@@ -85,20 +85,22 @@ class SecurityTestsApi(RestResource):
 
         try:
             test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
-            urls_to_scan = [test_parameters.pop('url to scan').get('default')]
-            urls_exclusions = test_parameters.pop('exclusions').get('default', [])
-            scan_location = test_parameters.pop('scan location').get('default', '')
+
         except ValidationError as e:
             errors.append({
                 'field': 'parameters',
                 'feedback': e.data
             })
 
-        integrations = loads(args['integrations'].replace("'", '"'))
-        processing = loads(args['processing'].replace("'", '"'))
-
         if errors:
             return abort(400, data=errors)
+
+        urls_to_scan = [test_parameters.pop('url to scan').get('default')]
+        urls_exclusions = test_parameters.pop('exclusions').get('default', [])
+        scan_location = test_parameters.pop('scan location').get('default', '')
+
+        integrations = loads(args['integrations'].replace("'", '"'))
+        processing = loads(args['processing'].replace("'", '"'))
 
         test_uid = str(uuid4())
         test = SecurityTestsDAST(
