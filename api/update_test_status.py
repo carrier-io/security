@@ -75,12 +75,19 @@ class TestStatusUpdater(RestResource):
 def write_test_run_logs_to_minio_bucket(test, file_name='log.txt'):
     loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))
     if loki_settings_url:
+        #
+        task_key = test.test_id
+        result_key = test.id
+        project_id = test.project_id
+        #
+        logs_query = "{" + f'task_key="{task_key}",result_test_id="{result_key}",project_id="{project_id}"' + "}"
+        #
         loki_url = urlunparse((
             loki_settings_url.scheme,
             loki_settings_url.netloc,
             '/loki/api/v1/query_range',
             None,
-            'query={result_test_id="133"}',
+            'query=' + logs_query,
             None
         ))
         response = requests.get(loki_url)
