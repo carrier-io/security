@@ -55,6 +55,7 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
             "description": "Process details description"
         }
     )
+    test_config = Column(JSON, nullable=False, unique=False)
 
     # TODO: write this method
     def set_test_status(self, ts):

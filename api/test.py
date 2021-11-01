@@ -161,6 +161,7 @@ class SecurityTestApi(RestResource):
             test_id=test.id,
             test_uid=test.test_uid,
             test_name=args["test_name"],
+            test_config=test.to_json()
         )
         security_results.insert()
 
