@@ -351,7 +351,7 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
 
         return ""
 
-    def to_json(self, exclude_fields: tuple = ()) -> dict:
-        test_param = super().to_json(exclude_fields)
-        # test_param["tools"] = ",".join(test_param["scanners_cards"].keys())
-        return test_param
+    # def to_json(self, exclude_fields: tuple = ()) -> dict:
+    #     test_param = super().to_json(exclude_fields)
+    #     # test_param["tools"] = ",".join(test_param["scanners_cards"].keys())
+    #     return test_param

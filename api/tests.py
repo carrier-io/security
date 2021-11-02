@@ -4,6 +4,7 @@ from json import loads
 from flask_restful import abort
 from sqlalchemy import and_
 
+from ..rpc import security_results_or_404
 from ...shared.utils.restApi import RestResource
 from ...shared.utils.api_utils import build_req_parser, get, str2bool
 
@@ -157,3 +158,49 @@ class SecurityTestsApi(RestResource):
             return response
 
         return test.to_json()
+
+
+class SecurityTestsRerun(RestResource):
+
+    def post(self, security_results_dast_id: int):
+        """
+        Post method for re-running test
+        """
+
+        test_result = security_results_or_404(security_results_dast_id)
+        test_config = test_result.test_config
+
+        test = SecurityTestsDAST.query.get(test_config['id'])
+        if not test:
+            test = SecurityTestsDAST(
+                project_id=test_config['project_id'],
+                project_name=test_config['project_name'],
+                test_uid=test_config['test_uid'],
+                name=test_config['name'],
+                description=test_config['description'],
+                urls_to_scan=test_config['urls_to_scan'],
+                urls_exclusions=test_config['urls_exclusions'],
+                scan_location=test_config['scan_location'],
+                test_parameters=test_config['test_parameters'],
+                integrations=test_config['integrations'],
+                processing=test_config['processing']
+            )
+            test.insert()
+
+        security_results = SecurityResultsDAST(
+            project_id=test.project_id,
+            test_id=test.id,
+            test_uid=test.test_uid,
+            test_name=test.name
+        )
+        security_results.insert()
+
+        event = []
+        test.results_test_id = security_results.id
+        test.commit()
+        event.append(test.configure_execution_json("cc"))
+
+        response = exec_test(test_config['project_id'], event)
+
+        return response
+
