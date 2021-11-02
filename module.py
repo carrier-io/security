@@ -21,10 +21,12 @@
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 from pylon.core.tools import module  # pylint: disable=E0611,E0401
 
+from .api.tests import SecurityTestsRerun
 from .init_db import init_db
 from .rpc import security_results_or_404
 
 from ..shared.utils.api_utils import add_resource_to_api
+
 
 
 class Module(module.ModuleModel):
@@ -83,6 +85,10 @@ class Module(module.ModuleModel):
         add_resource_to_api(
             self.context.api, SecurityReportAPI,
             "/security/<int:project_id>"
+        )
+        add_resource_to_api(
+            self.context.api, SecurityTestsRerun,
+            "/security/rerun/<int:security_results_dast_id>"
         )
 
         self.context.rpc_manager.register_function(security_results_or_404, name='security_results_or_404')

@@ -8,6 +8,8 @@ from ...shared.models.abstract_base import AbstractBaseMixin
 from ...shared.utils.rpc import RpcMixin
 from ...shared.connectors.minio import MinioClient
 
+from .api_tests import SecurityTestsDAST
+
 
 class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
     __tablename__ = "security_results_dast"
@@ -75,13 +77,13 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
         return MinioClient(self.rpc.call.project_get_or_404(self.project_id))
 
     def insert(self):
+        self.test_config = SecurityTestsDAST.query.get(self.test_id).to_json()
         super().insert()
         # minio part
         minio_client = self.get_minio_client()
         minio_client.create_bucket(bucket=self.bucket_name)
         # if created:
         #     minio_client.configure_bucket_lifecycle(self.bucket_name, 7)
-
 
 
     def to_json(self, exclude_fields: tuple = ()) -> dict:
