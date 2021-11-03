@@ -41,30 +41,10 @@ class TestStatusUpdater(RestResource):
         test = SecurityResultsDAST.query.filter(_filter).first()
         test.set_test_status(test_status)
 
-        if test_status["status"].lower().startswith("finished"):
-            if isinstance(test_id, int):
-                _filter = and_(
-                    SecurityReport.project_id == project_id, SecurityReport.id == test_id
-                )
-            else:
-                _filter = and_(
-                    SecurityReport.project_id == project_id, SecurityReport.test_uid == test_id
-                )
-            counted_severity = SecurityReport.query.with_entities(
-                SecurityReport.severity,
-                func.count(SecurityReport.severity)
-            ).filter(_filter).group_by(SecurityReport.severity).all()
-
-            counted_statuses = SecurityReport.query.with_entities(
-                SecurityReport.status,
-                func.count(SecurityReport.status)
-            ).filter(_filter).group_by(SecurityReport.status).all()
-
-            for severity in counted_severity:
-                setattr(test, severity[0].lower(), severity[1])
-
-            for status in counted_statuses:
-                setattr(test, status[0].lower().replace(" ", "_"), status[1])
+        if test_status['status'].lower().startswith('finished'):
+            test.update_severity_counts()
+            test.update_status_counts()
+            test.update_findings_counts()
             test.commit()
 
             write_test_run_logs_to_minio_bucket(test)

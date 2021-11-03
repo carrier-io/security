@@ -134,7 +134,7 @@ class SecurityTestApi(RestResource):
             event.append(test.configure_execution_json("cc"))
 
             response = exec_test(project.id, event)
-
+            response['result_id'] = security_results.id
             return response
 
         return {"message": "Parameters for test were updated"}
@@ -173,4 +173,5 @@ class SecurityTestApi(RestResource):
             return event[0]
 
         response = exec_test(project.id, event)
+        response['result_id'] = security_results.id
         return response
