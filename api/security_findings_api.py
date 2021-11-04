@@ -1,6 +1,6 @@
 import hashlib
 
-from flask import request
+from flask import request, abort
 from sqlalchemy import and_, func, or_, asc
 
 from ...shared.utils.restApi import RestResource
@@ -52,15 +52,14 @@ class FindingsAPI(RestResource):
 
         args = self._parser_get.parse_args(strict=False)
 
-        filter_ = []
-        filter_.append(SecurityReport.project_id == project_id)
-        filter_.append(SecurityReport.report_id == test_id)
+        filter_ = [
+            SecurityReport.project_id == project_id,
+            SecurityReport.report_id == test_id
+        ]
 
         if args.get("status"):
             filter_.append(SecurityReport.status.ilike(args["status"]))
-        filter_ = and_(*filter_)
-        # issues = SecurityReport.query.filter(filter_).all()
-        issues = SecurityReport.query.filter(filter_).order_by(asc(SecurityReport.id))
+        issues = SecurityReport.query.filter(*filter_).order_by(asc(SecurityReport.id))
         results = []
         for issue in issues:
             _res = issue.to_json()
@@ -70,115 +69,49 @@ class FindingsAPI(RestResource):
 
     def put(self, project_id: int, test_id: int):
         args = self._parser_put.parse_args(strict=False)
-        issues = args.get("issues_id")
-        issue_hashes = args.get("issue_hashes")
+        issues = args.get('issues_id')
+        issue_hashes = args.get('issue_hashes')
         accept_message = {"message": "accepted"}
 
-        assert issues or issue_hashes, ({"message": "No issues provided"}, 400)
+        assert issues or issue_hashes, abort(400, data={"message": "No issues provided"})
 
         if args.get("severity"):
-            update_value = {"severity": args["severity"]}
+            update_value = {"severity": args["severity"].replace(" ", "_")}
         elif args.get("status"):
             update_value = {"status": args["status"].replace(" ", "_")}
         else:
-            return {"message": "Action is invalid"}, 400
+            abort(400, data={"message": "Action is invalid"})
 
-        for issue_hash in issue_hashes:
-            print('UPDATING', issue_hash, update_value)
-            SecurityReport.query.filter(
-                and_(
+        if issues:
+            issue_hashes.extend(
+                SecurityReport.query.filter(
                     SecurityReport.project_id == project_id,
-                    SecurityReport.issue_hash == issue_hash,
-                    SecurityReport.report_id == test_id
-                )
-            ).update(update_value)
+                    SecurityReport.report_id == test_id,
+                    SecurityReport.id.in_(issues),
+                ).values('issue_hash', flat=True)
+            )
 
-        for issue_id in issues:
-            issue_hash = SecurityReport.query.filter(
-                and_(
-                    SecurityReport.project_id == project_id,
-                    SecurityReport.id == issue_id,
-                    SecurityReport.report_id == test_id
-                )
-            ).first().issue_hash
-
-            SecurityReport.query.filter(
-                and_(
-                    SecurityReport.project_id == project_id,
-                    SecurityReport.issue_hash == issue_hash,
-                    SecurityReport.report_id == test_id
-                )
-            ).update(update_value)
-            SecurityReport.commit()
-
-        finding_status_or_severity = (args.get("status"), args.get("severity"))
-        _filter = and_(
+        SecurityReport.query.filter(
             SecurityReport.report_id == test_id,
-            SecurityReport.project_id == project_id
-        )
+            SecurityReport.project_id == project_id,
+            SecurityReport.issue_hash.in_(set(issue_hashes)),
+        ).update(update_value)
+        SecurityReport.commit()
 
-        if finding_status_or_severity[0]:
-            _available_values = {"false_positive", "ignored", "valid"}
-            counted_statuses_or_severity = SecurityReport.query.with_entities(
-                SecurityReport.status, func.count(SecurityReport.status)).filter(_filter).group_by(SecurityReport.status).all()
-            counted_statuses_or_severity = list(map(lambda x: {x[0]: x[1]}, counted_statuses_or_severity))
-
-        else:
-            _available_values = {"critical", "high", "medium", "low", "info"}
-            counted_statuses_or_severity = SecurityReport.query.with_entities(
-                SecurityReport.severity, func.count(SecurityReport.severity)).filter(_filter).group_by(SecurityReport.severity).all()
-            counted_statuses_or_severity = list(map(lambda x: {x[0]: x[1]}, counted_statuses_or_severity))
-
-        for counted_stat_or_sevr in counted_statuses_or_severity:
-            key, value = list(counted_stat_or_sevr.items())[0]
-
-            if key.lower() not in _available_values:
-                continue
-            _available_values.remove(key.lower())
-
-            SecurityResultsDAST.query.filter(
-                and_(
-                    SecurityResultsDAST.project_id == project_id,
-                    SecurityResultsDAST.id == test_id
-                )
-            ).update(
-                {
-                    key.lower(): value
-                }
-            )
-            SecurityResultsDAST.commit()
-
-        for last_item in _available_values:
-            SecurityResultsDAST.query.filter(
-                and_(
-                    SecurityResultsDAST.project_id == project_id,
-                    SecurityResultsDAST.id == test_id
-                )
-            ).update(
-                {
-                    last_item: 0
-                }
-            )
-            SecurityResultsDAST.commit()
-
-        # Update all findings amount in Results table
-        all_findings = SecurityReport.query.filter(
-            and_(
-                SecurityReport.project_id == project_id,
-                SecurityReport.report_id == test_id
-            )
-        ).count()
-        SecurityResultsDAST.query.filter(
+        results = SecurityResultsDAST.query.filter(
             and_(
                 SecurityResultsDAST.project_id == project_id,
                 SecurityResultsDAST.id == test_id
             )
-        ).update(
-            {
-                "findings": all_findings
-            }
-        )
-        SecurityResultsDAST.commit()
+        ).first()
+
+        if args.get("status"):
+            results.update_status_counts()
+
+        if args.get("severity"):
+            results.update_severity_counts()
+
+        results.update_findings_counts()
         return accept_message
 
     def post(self, project_id: int):
@@ -235,3 +168,4 @@ class FindingsAPI(RestResource):
 
         if finding_db:
             finding_db.commit()
+

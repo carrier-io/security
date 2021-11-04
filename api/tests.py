@@ -154,7 +154,7 @@ class SecurityTestsApi(RestResource):
             event.append(test.configure_execution_json("cc"))
 
             response = exec_test(project.id, event)
-
+            response['result_id'] = security_results.id
             return response
 
         return test.to_json()
@@ -201,6 +201,6 @@ class SecurityTestsRerun(RestResource):
         event.append(test.configure_execution_json("cc"))
 
         response = exec_test(test_config['project_id'], event)
-
+        response['result_id'] = security_results.id
         return response
 

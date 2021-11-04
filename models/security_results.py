@@ -1,8 +1,9 @@
 import string
 from datetime import datetime as dt, timedelta
 
-from sqlalchemy import String, Column, Integer, JSON, DateTime, ARRAY
+from sqlalchemy import String, Column, Integer, JSON, DateTime, ARRAY, func
 
+from .security_reports import SecurityReport
 from ...shared.db_manager import Base
 from ...shared.models.abstract_base import AbstractBaseMixin
 from ...shared.utils.rpc import RpcMixin
@@ -12,6 +13,7 @@ from .api_tests import SecurityTestsDAST
 
 
 class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
+
     __tablename__ = "security_results_dast"
 
     # TODO: excluded = ignored
@@ -21,7 +23,7 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
     test_uid = Column(String(128), unique=False)
     test_name = Column(String(128), unique=False)
     start_date = Column(DateTime, default=dt.utcnow)
-    duration = Column(String(128), unique=False)
+    duration = Column(String(128), unique=False)  # todo: remove?
     #
     scan_time = Column(String(128), unique=False)
     scan_duration = Column(String(128), unique=False)
@@ -30,22 +32,22 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
     dast_target = Column(String(128), unique=False)
     sast_code = Column(String(128), unique=False)
     scan_type = Column(String(4), unique=False)
-    findings = Column(Integer, unique=False)
-    false_positives = Column(Integer, unique=False)
+    # findings = Column(Integer, unique=False)
+    false_positives = Column(Integer, unique=False)  # todo: remove?
     excluded = Column(Integer, unique=False)
-    info_findings = Column(Integer, unique=False)
+    info_findings = Column(Integer, unique=False)  # todo: remove?
     environment = Column(String(32), unique=False)
     #
     # findings counts
-    # findings = Column(Integer, unique=False, default=0)
-    valid = Column(Integer, unique=False, default=0)
-    false_positive = Column(Integer, unique=False, default=0)
-    ignored = Column(Integer, unique=False, default=0)
-    critical = Column(Integer, unique=False, default=0)
-    high = Column(Integer, unique=False, default=0)
-    medium = Column(Integer, unique=False, default=0)
-    low = Column(Integer, unique=False, default=0)
-    info = Column(Integer, unique=False, default=0)
+    findings = Column(Integer, unique=False, default=0)
+    # valid = Column(Integer, unique=False, default=0)
+    # false_positive = Column(Integer, unique=False, default=0)
+    # ignored = Column(Integer, unique=False, default=0)
+    # critical = Column(Integer, unique=False, default=0)
+    # high = Column(Integer, unique=False, default=0)
+    # medium = Column(Integer, unique=False, default=0)
+    # low = Column(Integer, unique=False, default=0)
+    # info = Column(Integer, unique=False, default=0)
     # other
     # excluded = Column(Integer, unique=False)
     tags = Column(ARRAY(String), default=[])
@@ -58,6 +60,7 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
         }
     )
     test_config = Column(JSON, nullable=False, unique=False)
+
 
     # TODO: write this method
     def set_test_status(self, ts):
@@ -94,3 +97,45 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
             test_param["ended_date"] = str(test_param["start_date"] + timedelta(seconds=float(test_param["duration"])))
         test_param["start_date"] = str(test_param["start_date"])
         return test_param
+
+
+    def update_severity_counts(self):
+        counts = SecurityReport.query.with_entities(
+            SecurityReport.severity, func.count(SecurityReport.severity),
+        ).filter(
+            SecurityReport.report_id == self.id,
+        ).group_by(
+            SecurityReport.severity,
+        ).all()
+        update_dict = dict.fromkeys(SecurityReport.SEVERITY_CHOICES.keys(), 0)
+        update_dict.update(dict(counts))
+        for k, v in update_dict.items():
+            setattr(self, k, v)
+        self.commit()
+        return update_dict
+
+    def update_status_counts(self):
+        counts = SecurityReport.query.with_entities(
+            SecurityReport.status, func.count(SecurityReport.status),
+        ).filter(
+            SecurityReport.report_id == self.id,
+        ).group_by(
+            SecurityReport.status
+        ).all()
+        update_dict = dict.fromkeys(SecurityReport.STATUS_CHOICES.keys(), 0)
+        update_dict.update(dict(counts))
+        for k, v in update_dict.items():
+            setattr(self, k, v)
+        self.commit()
+        return update_dict
+
+    def update_findings_counts(self):
+        self.findings = SecurityReport.query.filter(
+            SecurityReport.report_id == self.id
+        ).count()
+        self.commit()
+
+
+for i in [*SecurityReport.STATUS_CHOICES.keys(), *SecurityReport.SEVERITY_CHOICES.keys()]:
+    setattr(SecurityResultsDAST, i, Column(Integer, unique=False, default=0))
+
