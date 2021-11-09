@@ -1,3 +1,4 @@
+from datetime import datetime
 from io import BytesIO
 from urllib.parse import urlunparse, urlparse
 
@@ -52,7 +53,7 @@ class TestStatusUpdater(RestResource):
         return {"message": f"Status for test_id={test_id} of project_id: {project_id} updated"}, 200
 
 
-def write_test_run_logs_to_minio_bucket(test, file_name='log.txt'):
+def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='log.txt'):
     loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))
     if loki_settings_url:
         #
@@ -76,10 +77,21 @@ def write_test_run_logs_to_minio_bucket(test, file_name='log.txt'):
             enc = 'utf-8'
             file_output = BytesIO()
 
-            file_output.write(f'Test run {test.test_id} log:\n'.encode(enc))
+            file_output.write(f'Test {test.test_name} (id={test.test_id}) run log:\n'.encode(enc))
+
+            unpacked_values = []
             for i in results['data']['result']:
-                for timestamp, log_line in i['values']:
-                    file_output.write(f'{timestamp}\t{log_line}\n'.encode(enc))
+                for ii in i['values']:
+                    ii.append(i['stream']['level'])
+                    unpacked_values.append(ii)
+                # unpacked_values.extend()
+            for unix_ns, log_line, level in sorted(unpacked_values, key=lambda x: int(x[0])):
+                timestamp = datetime.fromtimestamp(int(unix_ns) / 1e9).strftime("%Y-%m-%d %H:%M:%S")
+                file_output.write(
+                    f'{timestamp}\t{level}\t{log_line}\n'.encode(
+                        enc
+                    )
+                )
             minio_client = test.get_minio_client()
             file_output.seek(0)
             minio_client.upload_file(test.bucket_name, file_output, file_name)
