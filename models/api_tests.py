@@ -84,12 +84,12 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
             # if "toolreports" in self.reporting:
             #     global_dast_settings["save_intermediates_to"] = "/tmp/intermediates"
 
-            scanners_config = {}
+            scanners_config = dict()
 
-            for scanner_name in self.integrations["scanners"]:
+            for scanner_name in self.integrations.get('scanners', []):
                 scanners_config[scanner_name] = \
                     current_app.config["CONTEXT"].rpc_manager.node.call(
-                        scanner_name,
+                        f'dusty_config_{scanner_name}',
                         self.__dict__,
                         self.integrations["scanners"][scanner_name],
                     )
@@ -109,6 +109,13 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
             #         )
 
             reporters_config = dict()
+            for reporter_name in self.integrations.get('reporters', []):
+                reporters_config[reporter_name] = \
+                    current_app.config["CONTEXT"].rpc_manager.node.call(
+                        f'dusty_config_{reporter_name}',
+                        self.__dict__,
+                        self.integrations["reporters"][reporter_name],
+                    )
             reporters_config["centry_loki"] = {
                 "url": loki_settings["url"],
                 "labels": {
