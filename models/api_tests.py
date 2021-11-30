@@ -15,7 +15,8 @@
 import string
 from json import dumps
 
-from sqlalchemy import Column, Integer, String, ARRAY, JSON
+from sqlalchemy import Column, Integer, String, ARRAY, JSON, DateTime
+from sqlalchemy.sql import func
 
 from ...shared.db_manager import Base
 from ...shared.models.abstract_base import AbstractBaseMixin
@@ -23,6 +24,8 @@ from ...shared.constants import CURRENT_RELEASE
 from ...projects.connectors.secrets import get_project_hidden_secrets, unsecret
 
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
+
+from ...shared.utils.api_utils import format_date
 
 
 class SecurityTestsDAST(AbstractBaseMixin, Base):
