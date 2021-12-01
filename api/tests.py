@@ -31,7 +31,6 @@ class SecurityTestsApi(RestResource):
 
         dict(name="parameters", type=str, location='json'),
         dict(name="integrations", type=str, location='json'),
-        dict(name="processing", type=str, location='json'),
         dict(name="run_test", type=bool, location='json'),
     )
 
@@ -101,7 +100,6 @@ class SecurityTestsApi(RestResource):
         scan_location = test_parameters.pop('scan location').get('default', '')
 
         integrations = loads(args['integrations'].replace("'", '"'))
-        processing = loads(args['processing'].replace("'", '"'))
 
         test_uid = str(uuid4())
         test = SecurityTestsDAST(
@@ -118,7 +116,6 @@ class SecurityTestsApi(RestResource):
             integrations=integrations,
             # scanners_cards=loads(args["scanners_cards"]),
             # reporting=loads(args["reporting"]),
-            processing=processing
         )
         test.insert()
 
@@ -183,7 +180,6 @@ class SecurityTestsRerun(RestResource):
                 scan_location=test_config['scan_location'],
                 test_parameters=test_config['test_parameters'],
                 integrations=test_config['integrations'],
-                processing=test_config['processing']
             )
             test.insert()
 
