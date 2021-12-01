@@ -44,32 +44,7 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
     test_parameters = Column(ARRAY(JSON), nullable=True)
     integrations = Column(JSON, nullable=True)
 
-    # test_environment = Column(String(128), nullable=False)
-    # reporting = Column(
-    #     ARRAY(JSON),
-    #     # nullable=False
-    # )
-    # scanners_cards = Column(JSON)  # {<scanner>: {<scanner_params>}, ...}
-    processing = Column(JSON)  # {<processing_card>: <value>, }
-
-    # region = Column(String(128), nullable=False, default="default")
-    # TODO: add relationship with DASTtestsResults table
     results_test_id = Column(Integer)
-    # bucket = Column(String(128), nullable=False)
-    # last_run = Column(Integer)
-    # job_type = Column(String(20))
-
-    def set_last_run(self, ts):
-        self.last_run = ts
-        self.commit()
-
-    @staticmethod
-    def sanitize(val):
-        valid_chars = "_%s%s" % (string.ascii_letters, string.digits)
-        return ''.join(c for c in val if c in valid_chars)
-
-    # def insert(self):
-    #     super().insert()
 
     def configure_execution_json(
             self,
@@ -364,4 +339,10 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
     # def to_json(self, exclude_fields: tuple = ()) -> dict:
     #     test_param = super().to_json(exclude_fields)
     #     # test_param["tools"] = ",".join(test_param["scanners_cards"].keys())
+    #     if test_param['created']:
+    #         test_param['created'] = format_date(test_param['created'])
+    #     if test_param['updated']:
+    #         test_param['updated'] = format_date(test_param['updated'])
+    #     # print('test_param', test_param)
+    #
     #     return test_param

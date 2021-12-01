@@ -6,6 +6,7 @@ from sqlalchemy import String, Column, Integer, JSON, DateTime, ARRAY, func
 from .security_reports import SecurityReport
 from ...shared.db_manager import Base
 from ...shared.models.abstract_base import AbstractBaseMixin
+from ...shared.utils.api_utils import format_date
 from ...shared.utils.rpc import RpcMixin
 from ...shared.connectors.minio import MinioClient
 
@@ -94,8 +95,8 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
 
         test_param["name"] = test_param.pop("test_name")
         if test_param["duration"]:
-            test_param["ended_date"] = str(test_param["start_date"] + timedelta(seconds=float(test_param["duration"])))
-        test_param["start_date"] = str(test_param["start_date"])
+            test_param["ended_date"] = format_date(test_param["start_date"] + timedelta(seconds=float(test_param["duration"])))
+        test_param["start_date"] = format_date(test_param["start_date"])
         return test_param
 
 
