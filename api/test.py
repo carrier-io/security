@@ -3,6 +3,7 @@ from json import loads
 from flask_restful import abort
 from sqlalchemy import and_
 
+from ..utils import json_hook
 from ...shared.utils.restApi import RestResource
 from ...shared.utils.api_utils import build_req_parser
 
@@ -22,7 +23,6 @@ class SecurityTestApi(RestResource):
         dict(name="description", type=str, location='json'),
         dict(name="parameters", type=str, location='json'),
         dict(name="integrations", type=str, location='json'),
-        dict(name="processing", type=str, location='json'),
         dict(name="run_test", type=bool, location='json'),
     )
 
@@ -88,8 +88,7 @@ class SecurityTestApi(RestResource):
         urls_exclusions = test_parameters.pop('exclusions').get('default', [])
         scan_location = test_parameters.pop('scan location').get('default', '')
 
-        integrations = loads(args['integrations'].replace("'", '"'))
-        processing = loads(args['processing'].replace("'", '"'))
+        integrations = loads(args['integrations'].replace('True', '"True"').replace('False', '"False"').replace("'", '"'), object_hook=json_hook)
 
         update_values = {
             "name": test_name,
@@ -99,7 +98,6 @@ class SecurityTestApi(RestResource):
             'scan_location': scan_location,
             'test_parameters': test_parameters.values(),
             'integrations': integrations,
-            "processing": processing
         }
 
         project = self.rpc.project_get_or_404(project_id=project_id)
