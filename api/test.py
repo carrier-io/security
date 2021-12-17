@@ -1,9 +1,10 @@
 from json import loads
 
+from flask import request
 from flask_restful import abort
 from sqlalchemy import and_
 
-from ..utils import json_hook
+# from ..utils import json_hook
 from ...shared.utils.restApi import RestResource
 from ...shared.utils.api_utils import build_req_parser
 
@@ -14,25 +15,25 @@ from .utils import exec_test, format_test_parameters, ValidationError
 
 
 class SecurityTestApi(RestResource):
-    _post_rules = (
-        dict(name="test_name", type=str, required=False, location='json'),
-    )
+    # _post_rules = (
+    #     dict(name="test_name", type=str, required=False, location='json'),
+    # )
 
-    _put_rules = (
-        dict(name="name", type=str, location='json'),
-        dict(name="description", type=str, location='json'),
-        dict(name="parameters", type=str, location='json'),
-        dict(name="integrations", type=str, location='json'),
-        dict(name="run_test", type=bool, location='json'),
-    )
+    # _put_rules = (
+    #     dict(name="name", type=str, location='json'),
+    #     dict(name="description", type=str, location='json'),
+    #     dict(name="parameters", type=str, location='json'),
+    #     dict(name="integrations", type=str, location='json'),
+    #     dict(name="run_test", type=bool, location='json'),
+    # )
 
-    def __init__(self):
-        super(SecurityTestApi, self).__init__()
-        self.__init_req_parsers()
+    # def __init__(self):
+    #     super(SecurityTestApi, self).__init__()
+    #     self.__init_req_parsers()
 
-    def __init_req_parsers(self):
-        self.post_parser = build_req_parser(rules=self._post_rules)
-        self.put_parser = build_req_parser(rules=self._put_rules)
+    # def __init_req_parsers(self):
+    #     self.post_parser = build_req_parser(rules=self._post_rules)
+    #     self.put_parser = build_req_parser(rules=self._put_rules)
 
     def get(self, project_id, test_id):
         project = self.rpc.project_get_or_404(project_id=project_id)
@@ -60,13 +61,11 @@ class SecurityTestApi(RestResource):
 
     def put(self, project_id, test_id):
         """ Update test data """
-        args = self.put_parser.parse_args(strict=False)
-        print('EDIT ARGS', args)
-        run_test = args.pop("run_test")
+        run_test = request.json.get('run_test', False)
 
         errors = []
 
-        test_name = args.get('name', None)
+        test_name = request.json.get('name', None)
         if not test_name:
             errors.append({
                 'field': 'name',
@@ -74,7 +73,7 @@ class SecurityTestApi(RestResource):
             })
 
         try:
-            test_parameters = format_test_parameters(loads(args['parameters'].replace("'", '"')))
+            test_parameters = format_test_parameters(request.json['parameters'])
         except ValidationError as e:
             errors.append({
                 'field': 'parameters',
@@ -88,11 +87,11 @@ class SecurityTestApi(RestResource):
         urls_exclusions = test_parameters.pop('exclusions').get('default', [])
         scan_location = test_parameters.pop('scan location').get('default', '')
 
-        integrations = loads(args['integrations'].replace('True', '"True"').replace('False', '"False"').replace("'", '"'), object_hook=json_hook)
+        integrations = request.json['integrations']
 
         update_values = {
             "name": test_name,
-            'description': args['description'],
+            'description': request.json['description'],
             "urls_to_scan": urls_to_scan,
             "urls_exclusions": urls_exclusions,
             'scan_location': scan_location,
@@ -116,7 +115,6 @@ class SecurityTestApi(RestResource):
         SecurityTestsDAST.commit()
 
         test = test.first()
-        print('GOT TEST', test)
         if run_test:
             security_results = SecurityResultsDAST(
                 project_id=project.id,
@@ -139,7 +137,6 @@ class SecurityTestApi(RestResource):
 
     def post(self, project_id, test_id):
         """ Run test """
-        args = self.post_parser.parse_args(strict=False)
         project = self.rpc.project_get_or_404(project_id=project_id)
 
         if isinstance(test_id, int):
@@ -158,7 +155,7 @@ class SecurityTestApi(RestResource):
             project_id=project.id,
             test_id=test.id,
             test_uid=test.test_uid,
-            test_name=args["test_name"],
+            test_name=request.json["test_name"],
         )
         security_results.insert()
 
@@ -167,7 +164,7 @@ class SecurityTestApi(RestResource):
 
         event.append(test.configure_execution_json("cc"))
 
-        if args.get("type") == "config":
+        if request.json.get("type") == "config":
             return event[0]
 
         response = exec_test(project.id, event)
