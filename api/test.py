@@ -1,40 +1,17 @@
-from json import loads
-
 from flask import request
 from flask_restful import abort
 from sqlalchemy import and_
 
-# from ..utils import json_hook
+from ..utils import run_test
 from ...shared.utils.restApi import RestResource
-from ...shared.utils.api_utils import build_req_parser
 
 from ..models.api_tests import SecurityTestsDAST
 from ..models.security_results import SecurityResultsDAST
 from ..models.security_reports import SecurityReport
-from .utils import exec_test, format_test_parameters, ValidationError
+from .utils import format_test_parameters, ValidationError
 
 
 class SecurityTestApi(RestResource):
-    # _post_rules = (
-    #     dict(name="test_name", type=str, required=False, location='json'),
-    # )
-
-    # _put_rules = (
-    #     dict(name="name", type=str, location='json'),
-    #     dict(name="description", type=str, location='json'),
-    #     dict(name="parameters", type=str, location='json'),
-    #     dict(name="integrations", type=str, location='json'),
-    #     dict(name="run_test", type=bool, location='json'),
-    # )
-
-    # def __init__(self):
-    #     super(SecurityTestApi, self).__init__()
-    #     self.__init_req_parsers()
-
-    # def __init_req_parsers(self):
-    #     self.post_parser = build_req_parser(rules=self._post_rules)
-    #     self.put_parser = build_req_parser(rules=self._put_rules)
-
     def get(self, project_id, test_id):
         project = self.rpc.project_get_or_404(project_id=project_id)
 
@@ -59,7 +36,7 @@ class SecurityTestApi(RestResource):
             test["scanners"] = ", ".join([scan[0] for scan in scanners])
         return test
 
-    def put(self, project_id, test_id):
+    def put(self, project_id: int, test_id: int):
         """ Update test data """
         run_test = request.json.get('run_test', False)
 
@@ -73,10 +50,10 @@ class SecurityTestApi(RestResource):
             })
 
         try:
-            test_parameters = format_test_parameters(request.json['parameters'])
+            test_parameters = format_test_parameters(request.json['test_parameters'])
         except ValidationError as e:
             errors.append({
-                'field': 'parameters',
+                'field': 'test_parameters',
                 'feedback': e.data
             })
 
@@ -90,10 +67,10 @@ class SecurityTestApi(RestResource):
         integrations = request.json['integrations']
 
         update_values = {
-            "name": test_name,
+            'name': test_name,
             'description': request.json['description'],
-            "urls_to_scan": urls_to_scan,
-            "urls_exclusions": urls_exclusions,
+            'urls_to_scan': urls_to_scan,
+            'urls_exclusions': urls_exclusions,
             'scan_location': scan_location,
             'test_parameters': test_parameters.values(),
             'integrations': integrations,
@@ -116,22 +93,23 @@ class SecurityTestApi(RestResource):
 
         test = test.first()
         if run_test:
-            security_results = SecurityResultsDAST(
-                project_id=project.id,
-                test_id=test.id,
-                test_uid=test.test_uid,
-                test_name=test.name
-            )
-            security_results.insert()
-
-            event = []
-            test.results_test_id = security_results.id
-            test.commit()
-            event.append(test.configure_execution_json("cc"))
-
-            response = exec_test(project.id, event)
-            response['result_id'] = security_results.id
-            return response
+            # security_results = SecurityResultsDAST(
+            #     project_id=project.id,
+            #     test_id=test.id,
+            #     test_uid=test.test_uid,
+            #     test_name=test.name
+            # )
+            # security_results.insert()
+            #
+            # event = []
+            # test.results_test_id = security_results.id
+            # test.commit()
+            # event.append(test.configure_execution_json("cc"))
+            #
+            # response = exec_test(project.id, event)
+            # response['result_id'] = security_results.id
+            # return response
+            return run_test(test)
 
         return {"message": "Parameters for test were updated"}
 
@@ -149,24 +127,24 @@ class SecurityTestApi(RestResource):
             )
         test = SecurityTestsDAST.query.filter(_filter).first()
 
-        event = list()
-
-        security_results = SecurityResultsDAST(
-            project_id=project.id,
-            test_id=test.id,
-            test_uid=test.test_uid,
-            test_name=request.json["test_name"],
-        )
-        security_results.insert()
-
-        test.results_test_id = security_results.id
-        test.commit()
-
-        event.append(test.configure_execution_json("cc"))
-
-        if request.json.get("type") == "config":
-            return event[0]
-
-        response = exec_test(project.id, event)
-        response['result_id'] = security_results.id
-        return response
+        # event = list()
+        #
+        # security_results = SecurityResultsDAST(
+        #     project_id=project.id,
+        #     test_id=test.id,
+        #     test_uid=test.test_uid,
+        #     test_name=request.json["test_name"],
+        # )
+        # security_results.insert()
+        #
+        # test.results_test_id = security_results.id
+        # test.commit()
+        #
+        # event.append(test.configure_execution_json("cc"))
+        #
+        # if request.json.get("type") == "config":
+        #     return event[0]
+        #
+        # response = exec_test(project.id, event)
+        # response['result_id'] = security_results.id
+        return run_test(test, config_only=request.json.get('type', False))

@@ -1,71 +1,43 @@
 from uuid import uuid4
-from json import loads
 
 from flask_restful import abort
 from sqlalchemy import and_
 from flask import request
-from pylon.core.tools import log
 
 from ..rpc import security_results_or_404
+from ..utils import run_test
 from ...shared.utils.restApi import RestResource
-from ...shared.utils.api_utils import build_req_parser, get, str2bool
+from ...shared.utils.api_utils import get
 
 from ..models.api_tests import SecurityTestsDAST
-from ..models.security_results import SecurityResultsDAST
 from ..models.security_thresholds import SecurityThresholds
-from .utils import exec_test, format_test_parameters, ValidationError
+from .utils import format_test_parameters, ValidationError
 
 
 class SecurityTestsApi(RestResource):
-    # _get_rules = (
-    #     dict(name="offset", type=int, default=0, location="args"),
-    #     dict(name="limit", type=int, default=0, location="args"),
-    #     dict(name="search", type=str, default="", location="args"),
-    #     dict(name="sort", type=str, default="", location="args"),
-    #     dict(name="order", type=str, default="", location="args"),
-    #     dict(name="name", type=str, location="args"),
-    #     dict(name="filter", type=str, location="args")
-    # )
-
-    # _delete_rules = (
-    #     dict(name="id[]", type=int, action="append", location="args"),
-    # )
-    #
-    # def __init__(self):
-    #     super().__init__()
-    #     self.__init_req_parsers()
-
-    # def __init_req_parsers(self):
-        # self.get_parser = build_req_parser(rules=self._get_rules)
-        # self.post_parser = build_req_parser(rules=self._post_rules)
-        # self.delete_parser = build_req_parser(rules=self._delete_rules)
-
     def get(self, project_id: int):
-        # args = self.get_parser.parse_args(strict=False)
         reports = []
-        # total, res = get(project_id, args, SecurityTestsDAST)
         total, res = get(project_id, request.args, SecurityTestsDAST)
         for each in res:
             reports.append(each.to_json())
         return {"total": total, "rows": reports}
 
     def delete(self, project_id: int):
-        # args = self.delete_parser.parse_args(strict=False)
         project = self.rpc.project_get_or_404(project_id=project_id)
-        query_result = SecurityTestsDAST.query.filter(
-            # and_(SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id.in_(args["id[]"]))
+        # query_result = SecurityTestsDAST.query.filter(
+        #     and_(SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id.in_(request.json["id[]"]))
+        # ).all()
+        # for each in query_result:
+        #     each.delete()
+        SecurityTestsDAST.query.filter(
             and_(SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id.in_(request.json["id[]"]))
-        ).all()
-        for each in query_result:
-            each.delete()
+        ).delete(synchronize_session=False)
         return {"message": "deleted"}
 
     def post(self, project_id: int):
         """
         Post method for creating and running test
         """
-
-        run_test = request.json.get('run_test', False)
 
         errors = []
         test_name = request.json.get('name', None)
@@ -78,11 +50,11 @@ class SecurityTestsApi(RestResource):
         project = self.rpc.project_get_or_404(project_id=project_id)
 
         try:
-            test_parameters = format_test_parameters(request.json['parameters'])
+            test_parameters = format_test_parameters(request.json['test_parameters'])
 
         except ValidationError as e:
             errors.append({
-                'field': 'parameters',
+                'field': 'test_parameters',
                 'feedback': e.data
             })
 
@@ -127,29 +99,28 @@ class SecurityTestsApi(RestResource):
         )
         threshold.insert()
 
-        if run_test:
-            security_results = SecurityResultsDAST(
-                project_id=project.id,
-                test_id=test.id,
-                test_uid=test_uid,
-                test_name=test.name
-            )
-            security_results.insert()
-
-            event = []
-            test.results_test_id = security_results.id
-            test.commit()
-            event.append(test.configure_execution_json("cc"))
-
-            response = exec_test(project.id, event)
-            response['result_id'] = security_results.id
-            return response
-
+        if request.json.get('run_test', False):
+            # security_results = SecurityResultsDAST(
+            #     project_id=project.id,
+            #     test_id=test.id,
+            #     test_uid=test_uid,
+            #     test_name=test.name
+            # )
+            # security_results.insert()
+            #
+            # event = []
+            # test.results_test_id = security_results.id
+            # test.commit()
+            # event.append(test.configure_execution_json("cc"))
+            #
+            # response = exec_test(project.id, event)
+            # response['result_id'] = security_results.id
+            # return response
+            return run_test(test)
         return test.to_json()
 
 
 class SecurityTestsRerun(RestResource):
-
     def post(self, security_results_dast_id: int):
         """
         Post method for re-running test
@@ -174,20 +145,21 @@ class SecurityTestsRerun(RestResource):
             )
             test.insert()
 
-        security_results = SecurityResultsDAST(
-            project_id=test.project_id,
-            test_id=test.id,
-            test_uid=test.test_uid,
-            test_name=test.name
-        )
-        security_results.insert()
-
-        event = []
-        test.results_test_id = security_results.id
-        test.commit()
-        event.append(test.configure_execution_json("cc"))
-
-        response = exec_test(test_config['project_id'], event)
-        response['result_id'] = security_results.id
-        return response
+        # security_results = SecurityResultsDAST(
+        #     project_id=test.project_id,
+        #     test_id=test.id,
+        #     test_uid=test.test_uid,
+        #     test_name=test.name
+        # )
+        # security_results.insert()
+        #
+        # event = []
+        # test.results_test_id = security_results.id
+        # test.commit()
+        # event.append(test.configure_execution_json("cc"))
+        #
+        # response = exec_test(test_config['project_id'], event)
+        # response['result_id'] = security_results.id
+        # return response
+        return run_test(test)
 
