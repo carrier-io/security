@@ -8,7 +8,7 @@ from ...shared.utils.restApi import RestResource
 from ..models.api_tests import SecurityTestsDAST
 from ..models.security_results import SecurityResultsDAST
 from ..models.security_reports import SecurityReport
-from .utils import format_test_parameters, ValidationError
+# from .utils import format_test_parameters, ValidationError
 
 
 class SecurityTestApi(RestResource):
@@ -60,9 +60,9 @@ class SecurityTestApi(RestResource):
         if errors:
             return abort(400, data=errors)
 
-        urls_to_scan = [test_parameters.pop('url to scan').get('default')]
-        urls_exclusions = test_parameters.pop('exclusions').get('default', [])
-        scan_location = test_parameters.pop('scan location').get('default', '')
+        # urls_to_scan = [test_parameters.pop('url to scan').get('default')]
+        # urls_exclusions = test_parameters.pop('exclusions').get('default', [])
+        # scan_location = test_parameters.pop('scan location').get('default', '')
 
         integrations = request.json['integrations']
 

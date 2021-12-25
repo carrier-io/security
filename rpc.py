@@ -1,9 +1,10 @@
-from functools import reduce
-
 from sqlalchemy.sql import func, LABEL_STYLE_TABLENAME_PLUS_COL
 
+from .models.pd.security_test import SecurityTestParams, SecurityTestCommon
 from .models.security_reports import SecurityReport
 from .models.security_results import SecurityResultsDAST
+
+from ..shared.utils.rpc import RpcMixin
 
 
 def security_results_or_404(run_id: int) -> SecurityResultsDAST:
@@ -21,3 +22,20 @@ def overview_data(project_id: int):
         SecurityResultsDAST.project_id == project_id,
     )
     return dict(zip([i['name'] for i in q.column_descriptions], q.first()))
+
+
+def parse_test_parameters(data: list) -> dict:
+    pd_object = SecurityTestParams(test_parameters=data)
+    return pd_object.dict()
+
+
+def parse_common_test_parameters(project_id: int, name: str, description: str) -> dict:
+    rpc = RpcMixin().rpc
+    project = rpc.call.project_get_or_404(project_id=project_id)
+    pd_object = SecurityTestCommon(
+        project_id=project.id,
+        project_name=project.name,
+        name=name,
+        description=description
+    )
+    return pd_object.dict()

@@ -1,3 +1,5 @@
+import json
+
 from .models.api_tests import SecurityTestsDAST
 from .models.security_results import SecurityResultsDAST
 
@@ -31,3 +33,13 @@ def run_test(test: SecurityTestsDAST, config_only=False):
 
     response['result_id'] = security_results.id
     return response
+
+
+class ValidationErrorPD(Exception):
+    def __init__(self, loc: str, msg: str):
+        self.loc = loc
+        self.msg = msg
+        super().__init__({'loc': [loc], 'msg': msg})
+
+    def json(self):
+        return json.dumps([{'loc': [self.loc], 'msg': self.msg}])
