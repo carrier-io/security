@@ -42,4 +42,7 @@ class ValidationErrorPD(Exception):
         super().__init__({'loc': [loc], 'msg': msg})
 
     def json(self):
-        return json.dumps([{'loc': [self.loc], 'msg': self.msg}])
+        return json.dumps(self.dict())
+
+    def dict(self):
+        return {'loc': [self.loc], 'msg': self.msg}

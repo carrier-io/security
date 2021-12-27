@@ -1,3 +1,4 @@
+import json
 from queue import Empty
 
 from flask_restful import Resource
@@ -30,42 +31,32 @@ class SecurityTestsApi(Resource, RpcMixin):
         # ).all()
         # for each in query_result:
         #     each.delete()
+        try:
+            delete_ids = list(map(int, request.args["id[]"].split(',')))
+        except TypeError:
+            return make_response('IDs must be integers', 400)
+        # print('delete_ids', delete_ids)
+        # log.warning('delete_ids')
+        # log.warning(delete_ids)
+
         SecurityTestsDAST.query.filter(
-            and_(SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id.in_(request.json["id[]"]))
-        ).delete(synchronize_session=False)
-        return {"message": "deleted"}
+            and_(
+                SecurityTestsDAST.project_id == project.id,
+                SecurityTestsDAST.id.in_(delete_ids)
+            )
+        ).delete()
+        SecurityTestsDAST.commit()
+        return make_response({'ids': delete_ids}, 200)
 
     def post(self, project_id: int):
         """
         Post method for creating and running test
         """
+        errors = list()
 
-        errors = []
-        # test_name = request.json.get('name', None)
-        # if not test_name:
-        #     errors.append({
-        #         'field': 'name',
-        #         'feedback': 'Test name is required'
-        #     })
-
-        # project = self.rpc.project_get_or_404(project_id=project_id)
-        try:
-            test_run = request.json.pop('run_test')
-        except KeyError:
-            test_run = False
-
-        test_name = None
-        test_description = None
-        test_data = dict()
-
-        try:
-            test_name = request.json.pop('name')
-        except KeyError:
-            ...
-        try:
-            test_description = request.json.pop('description')
-        except KeyError:
-            ...
+        run_test_ = request.json.pop('run_test', False)
+        test_name = request.json.pop('name', None)
+        test_description = request.json.pop('description', None)
 
         try:
             test_data = self.rpc.call.security_test_create_common_parameters(
@@ -74,38 +65,37 @@ class SecurityTestsApi(Resource, RpcMixin):
                 description=test_description
             )
         except ValidationError as e:
-            print('test_data_error 1')
-            print(e)
+            test_data = dict()
+            # print('test_data_error 1')
+            # print(e)
             errors.extend(e.errors())
             # return make_response(e.json(), 400)
 
-        print('test_data 1')
-        print(test_data)
+        # print('test_data 1')
+        # print(test_data)
 
         # for i in set(request.json.keys()):
         for i, v in request.json.items():
             try:
-                print('security test create :: parsing :: [%s]', i)
+                # print('security test create :: parsing :: [%s]', i)
                 test_data.update(self.rpc.call_function_with_timeout(
-                    func='{prefix}_{key}'.format(
-                        prefix='security_test_create',
-                        key=i
-                    ),
-                    timeout=3,
+                    func=f'security_test_create_{i}',
+                    timeout=1,
                     data=v,
                 ))
             except Empty:
-                print('Cannot find parser for %s', i)
-
+                ...
+                # print('Cannot find parser for %s', i)
+                # errors.append(ValidationErrorPD('alert_bar', f'Cannot find parser for {i}'))
                 # return make_response(ValidationErrorPD('alert_bar', f'Cannot find parser for {i}').json(), 404)
             except ValidationError as e:
                 errors.extend(e.errors())
                 # return make_response(e.json(), 400)
-            print('test_data 2')
-            print(test_data)
+            # print('test_data 2')
+            # print(test_data)
 
-        print('test_data 3 FINAL')
-        print(test_data)
+        # print('test_data 3 FINAL')
+        # print(test_data)
 
         # try:
         #     test_parameters = format_test_parameters(request.json['test_parameters'])
@@ -123,7 +113,7 @@ class SecurityTestsApi(Resource, RpcMixin):
         # urls_exclusions = test_parameters.pop('exclusions').get('default', [])
         # scan_location = test_parameters.pop('scan location').get('default', '')
 
-        integrations = request.json['integrations']
+        # integrations = request.json['integrations']
 
         # test = SecurityTestsDAST(
         #     project_id=project.id,
@@ -142,10 +132,9 @@ class SecurityTestsApi(Resource, RpcMixin):
 
 
         if errors:
-            import json
-            return make_response(json.dumps(errors), 400)
+            return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
-        test = SecurityTestsDAST(**test_data, integrations=integrations, )
+        test = SecurityTestsDAST(**test_data)
         test.insert()
 
         threshold = SecurityThresholds(
@@ -165,7 +154,7 @@ class SecurityTestsApi(Resource, RpcMixin):
         )
         threshold.insert()
 
-        if run_test:
+        if run_test_:
             # security_results = SecurityResultsDAST(
             #     project_id=project.id,
             #     test_id=test.id,
