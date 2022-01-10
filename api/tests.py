@@ -1,14 +1,11 @@
 import json
-from queue import Empty
 
 from flask_restful import Resource
-from pylon.core.tools import log
 from sqlalchemy import and_
 from flask import request, make_response
-from pydantic import ValidationError
 
 from ..rpc import security_results_or_404
-from ..utils import run_test, ValidationErrorPD
+from ..utils import run_test, parse_test_data
 from ..models.api_tests import SecurityTestsDAST
 from ..models.security_thresholds import SecurityThresholds
 
@@ -18,26 +15,19 @@ from ...shared.utils.api_utils import get
 
 class SecurityTestsApi(Resource, RpcMixin):
     def get(self, project_id: int):
-        reports = []
         total, res = get(project_id, request.args, SecurityTestsDAST)
-        for each in res:
-            reports.append(each.to_json())
-        return {"total": total, "rows": reports}
+
+        return make_response(
+            {"total": total, "rows": [i.to_json() for i in res]},
+            200
+        )
 
     def delete(self, project_id: int):
         project = self.rpc.call.project_get_or_404(project_id=project_id)
-        # query_result = SecurityTestsDAST.query.filter(
-        #     and_(SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id.in_(request.json["id[]"]))
-        # ).all()
-        # for each in query_result:
-        #     each.delete()
         try:
             delete_ids = list(map(int, request.args["id[]"].split(',')))
         except TypeError:
             return make_response('IDs must be integers', 400)
-        # print('delete_ids', delete_ids)
-        # log.warning('delete_ids')
-        # log.warning(delete_ids)
 
         SecurityTestsDAST.query.filter(
             and_(
@@ -52,84 +42,13 @@ class SecurityTestsApi(Resource, RpcMixin):
         """
         Post method for creating and running test
         """
-        errors = list()
 
         run_test_ = request.json.pop('run_test', False)
-        test_name = request.json.pop('name', None)
-        test_description = request.json.pop('description', None)
-
-        try:
-            test_data = self.rpc.call.security_test_create_common_parameters(
-                project_id=project_id,
-                name=test_name,
-                description=test_description
-            )
-        except ValidationError as e:
-            test_data = dict()
-            # print('test_data_error 1')
-            # print(e)
-            errors.extend(e.errors())
-            # return make_response(e.json(), 400)
-
-        # print('test_data 1')
-        # print(test_data)
-
-        # for i in set(request.json.keys()):
-        for i, v in request.json.items():
-            try:
-                # print('security test create :: parsing :: [%s]', i)
-                test_data.update(self.rpc.call_function_with_timeout(
-                    func=f'security_test_create_{i}',
-                    timeout=1,
-                    data=v,
-                ))
-            except Empty:
-                ...
-                # print('Cannot find parser for %s', i)
-                # errors.append(ValidationErrorPD('alert_bar', f'Cannot find parser for {i}'))
-                # return make_response(ValidationErrorPD('alert_bar', f'Cannot find parser for {i}').json(), 404)
-            except ValidationError as e:
-                errors.extend(e.errors())
-                # return make_response(e.json(), 400)
-            # print('test_data 2')
-            # print(test_data)
-
-        # print('test_data 3 FINAL')
-        # print(test_data)
-
-        # try:
-        #     test_parameters = format_test_parameters(request.json['test_parameters'])
-        #
-        # except ValidationError as e:
-        #     errors.append({
-        #         'field': 'test_parameters',
-        #         'feedback': e.data
-        #     })
-        #
-        # if errors:
-        #     return abort(400, data=errors)
-        #
-        # urls_to_scan = [test_parameters.pop('url to scan').get('default')]
-        # urls_exclusions = test_parameters.pop('exclusions').get('default', [])
-        # scan_location = test_parameters.pop('scan location').get('default', '')
-
-        # integrations = request.json['integrations']
-
-        # test = SecurityTestsDAST(
-        #     project_id=project.id,
-        #     project_name=project.name,
-        #     test_uid=str(uuid4()),
-        #     name=test_name,
-        #     description=request.json['description'],
-        #
-        #     urls_to_scan=urls_to_scan,
-        #     urls_exclusions=urls_exclusions,
-        #     scan_location=scan_location,
-        #     test_parameters=test_parameters.values(),
-        #
-        #     integrations=integrations,
-        # )
-
+        test_data, errors = parse_test_data(
+            project_id=project_id,
+            request_data=request.json,
+            rpc=self.rpc,
+        )
 
         if errors:
             return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
@@ -155,22 +74,6 @@ class SecurityTestsApi(Resource, RpcMixin):
         threshold.insert()
 
         if run_test_:
-            # security_results = SecurityResultsDAST(
-            #     project_id=project.id,
-            #     test_id=test.id,
-            #     test_uid=test_uid,
-            #     test_name=test.name
-            # )
-            # security_results.insert()
-            #
-            # event = []
-            # test.results_test_id = security_results.id
-            # test.commit()
-            # event.append(test.configure_execution_json("cc"))
-            #
-            # response = exec_test(project.id, event)
-            # response['result_id'] = security_results.id
-            # return response
             return run_test(test)
         return test.to_json()
 
@@ -192,10 +95,12 @@ class SecurityTestsRerun(Resource):
                 test_uid=test_config['test_uid'],
                 name=test_config['name'],
                 description=test_config['description'],
+
                 urls_to_scan=test_config['urls_to_scan'],
                 urls_exclusions=test_config['urls_exclusions'],
                 scan_location=test_config['scan_location'],
                 test_parameters=test_config['test_parameters'],
+
                 integrations=test_config['integrations'],
             )
             test.insert()

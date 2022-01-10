@@ -24,9 +24,9 @@ def overview_data(project_id: int) -> dict:
     return dict(zip([i['name'] for i in q.column_descriptions], q.first()))
 
 
-def parse_test_parameters(data: list) -> dict:
+def parse_test_parameters(data: list, **kwargs) -> dict:
     pd_object = SecurityTestParams(test_parameters=data)
-    return pd_object.dict()
+    return pd_object.dict(**kwargs)
 
 
 def parse_common_test_parameters(project_id: int, name: str, description: str, **kwargs) -> dict:

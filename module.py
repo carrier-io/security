@@ -38,7 +38,7 @@ class Module(module.ModuleModel):
 
     def init(self):
         """ Init module """
-        log.info("Initializing module Security")
+        log.info(f'Initializing module {self.descriptor.name}')
         init_db()
         from .api.tests import SecurityTestsApi
         from .api.test import SecurityTestApi
@@ -90,11 +90,15 @@ class Module(module.ModuleModel):
             "/security/rerun/<int:security_results_dast_id>"
         )
 
-        self.context.rpc_manager.register_function(security_results_or_404, name='security_results_or_404')
-        self.context.rpc_manager.register_function(overview_data, name='security_overview_data')
-        self.context.rpc_manager.register_function(parse_test_parameters, name='security_test_create_test_parameters')
-        self.context.rpc_manager.register_function(parse_common_test_parameters, name='security_test_create_common_parameters')
+        self.context.rpc_manager.register_function(
+            security_results_or_404, name='security_results_or_404')
+        self.context.rpc_manager.register_function(
+            overview_data, name='security_overview_data')
+        self.context.rpc_manager.register_function(
+            parse_test_parameters, name='security_test_create_test_parameters')
+        self.context.rpc_manager.register_function(
+            parse_common_test_parameters, name='security_test_create_common_parameters')
 
     def deinit(self):  # pylint: disable=R0201
         """ De-init module """
-        log.info("De-initializing module")
+        log.info(f'De-initializing module {self.descriptor.name}')
