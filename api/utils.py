@@ -25,7 +25,6 @@ def format_test_parameters(test_parameters: list) -> dict:
     errors = dict()
     item_value_key = 'default'
     for index, i in enumerate(test_parameters):
-        # print('i[item_value_key]', type(i[item_value_key]), i[item_value_key])
         name = i.get('name').lower()
 
         for k in set(i.keys()):
@@ -53,7 +52,6 @@ def format_test_parameters(test_parameters: list) -> dict:
             errors[index] = f'{name} is required'
 
         result[name] = i
-    # print('AND RESULT IS', result)
     if errors:
         raise ValidationError(errors)
     return result

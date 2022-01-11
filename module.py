@@ -17,7 +17,6 @@
 
 """ Module """
 
-
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 from pylon.core.tools import module  # pylint: disable=E0611,E0401
 
@@ -26,7 +25,6 @@ from .init_db import init_db
 from .rpc import security_results_or_404, overview_data
 
 from ..shared.utils.api_utils import add_resource_to_api
-
 
 
 class Module(module.ModuleModel):
