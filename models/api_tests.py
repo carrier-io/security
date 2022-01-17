@@ -13,10 +13,13 @@
 #     limitations under the License.
 
 from json import dumps
+from queue import Empty
+from typing import List, Union
 
-from sqlalchemy import Column, Integer, String, ARRAY, JSON, DateTime
+from sqlalchemy import Column, Integer, String, ARRAY, JSON, DateTime, and_
 from sqlalchemy.sql import func
 
+from ...shared.utils.rpc import RpcMixin
 from ...shared.db_manager import Base
 from ...shared.models.abstract_base import AbstractBaseMixin
 from ...shared.constants import CURRENT_RELEASE
@@ -25,32 +28,78 @@ from ...projects.connectors.secrets import get_project_hidden_secrets, unsecret
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 
 
-
-class SecurityTestsDAST(AbstractBaseMixin, Base):
+class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
     __tablename__ = "security_tests_dast"
     id = Column(Integer, primary_key=True)
     project_id = Column(Integer, unique=False, nullable=False)
     project_name = Column(String(64), nullable=False)
-    test_uid = Column(String(128), unique=True, nullable=False)
+    test_uid = Column(String(64), unique=True, nullable=False)
 
     name = Column(String(128), nullable=False)
     description = Column(String(256), nullable=True, unique=False)
 
     urls_to_scan = Column(ARRAY(String(128)), nullable=False)
-    urls_exclusions = Column(ARRAY(String(128)))
+    urls_exclusions = Column(ARRAY(String(128)), nullable=True)
     scan_location = Column(String(128), nullable=False)
     test_parameters = Column(ARRAY(JSON), nullable=True)
 
     integrations = Column(JSON, nullable=True)
 
+    schedules = Column(ARRAY(Integer), nullable=True, default=[])
+
     results_test_id = Column(Integer)
+
+    def add_schedule(self, schedule_data: dict, commit_immediately: bool = True):
+        schedule_data['test_id'] = self.id
+        schedule_data['project_id'] = self.project_id
+        try:
+            schedule_id = self.rpc.timeout(2).scheduling_create_schedule(data=schedule_data)
+            log.info(f'schedule_id {schedule_id}')
+            updated_schedules = set(self.schedules)
+            updated_schedules.add(schedule_id)
+            self.schedules = list(updated_schedules)
+            if commit_immediately:
+                self.commit()
+            log.info(f'self.schedules {self.schedules}')
+        except Empty:
+            log.warning('No scheduling rpc found')
+
+    def handle_change_schedules(self, schedules_data: List[dict]):
+        new_schedules_ids = set(i['id'] for i in schedules_data if i['id'])
+        ids_to_delete = set(self.schedules).difference(new_schedules_ids)
+        self.schedules = []
+        for s in schedules_data:
+            log.warning('!!!adding schedule')
+            log.warning(s)
+            self.add_schedule(s, commit_immediately=False)
+        try:
+            self.rpc.timeout(2).scheduling_delete_schedules(ids_to_delete)
+        except Empty:
+            ...
+        self.commit()
+
+    @property
+    def scanners(self):
+        return list(self.integrations.get('scanners', {}).keys())
+
+    @staticmethod
+    def get_api_filter(project_id: int, test_id: Union[int, str]):
+        log.info(f'getting filter int? {isinstance(test_id, int)}  {test_id}')
+        if isinstance(test_id, int):
+            return and_(
+                SecurityTestsDAST.project_id == project_id,
+                SecurityTestsDAST.id == test_id
+            )
+        return and_(
+            SecurityTestsDAST.project_id == project_id,
+            SecurityTestsDAST.test_uid == test_id
+        )
 
     def configure_execution_json(
             self,
             output='cc',
             thresholds={}
     ):
-        from json import loads
 
         if output == "dusty":
             from flask import current_app
@@ -64,12 +113,16 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
             scanners_config = dict()
 
             for scanner_name in self.integrations.get('scanners', []):
-                scanners_config[scanner_name] = \
-                    current_app.config["CONTEXT"].rpc_manager.node.call(
-                        f'dusty_config_{scanner_name}',
-                        self.__dict__,
-                        self.integrations["scanners"][scanner_name],
-                    )
+                try:
+                    scanners_config[scanner_name] = \
+                        self.rpc.call_function_with_timeout(
+                            func=f'dusty_config_{scanner_name}',
+                            context=None,
+                            test_params=self.__dict__,
+                            scanner_params=self.integrations["scanners"][scanner_name],
+                        )
+                except Empty:
+                    log.warning(f'Cannot find scanner config rpc for {scanner_name}')
 
             # # scanners_data
             # for scanner_name in self.scanners_cards:
@@ -87,12 +140,17 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
 
             reporters_config = dict()
             for reporter_name in self.integrations.get('reporters', []):
-                reporters_config[reporter_name] = \
-                    current_app.config["CONTEXT"].rpc_manager.node.call(
-                        f'dusty_config_{reporter_name}',
-                        self.__dict__,
-                        self.integrations["reporters"][reporter_name],
-                    )
+                try:
+                    reporters_config[reporter_name] = \
+                        self.rpc.call_function_with_timeout(
+                            func=f'dusty_config_{reporter_name}',
+                            context=None,
+                            test_params=self.__dict__,
+                            scanner_params=self.integrations["reporters"][reporter_name],
+                        )
+                except Empty:
+                    log.warning(f'Cannot find reporter config rpc for {reporter_name}')
+
             reporters_config["centry_loki"] = {
                 "url": loki_settings["url"],
                 "labels": {
