@@ -1,8 +1,10 @@
 import json
+from queue import Empty
 
 from flask_restful import Resource
-from sqlalchemy import and_
+from pylon.core.tools import log
 from flask import request, make_response
+from sqlalchemy import and_
 
 from ..rpc import security_results_or_404
 from ..utils import run_test, parse_test_data
@@ -16,11 +18,30 @@ from ...shared.utils.api_utils import get
 class SecurityTestsApi(Resource, RpcMixin):
     def get(self, project_id: int):
         total, res = get(project_id, request.args, SecurityTestsDAST)
-
+        rows = []
+        for i in res:
+            test = i.to_json()
+            schedules = test.pop('schedules', [])
+            if schedules:
+                try:
+                    test['scheduling'] = self.rpc.timeout(2).scheduling_security_load_from_db_by_ids(schedules)
+                except Empty:
+                    ...
+            test['scanners'] = i.scanners
+            rows.append(test)
         return make_response(
-            {"total": total, "rows": [i.to_json() for i in res]},
+            {"total": total, "rows": rows},
             200
         )
+
+    @staticmethod
+    def get_schedules_ids(filter_) -> set:
+        r = set()
+        for i in SecurityTestsDAST.query.with_entities(SecurityTestsDAST.schedules).filter(
+            filter_
+        ).all():
+            r.update(set(*i))
+        return r
 
     def delete(self, project_id: int):
         project = self.rpc.call.project_get_or_404(project_id=project_id)
@@ -29,13 +50,20 @@ class SecurityTestsApi(Resource, RpcMixin):
         except TypeError:
             return make_response('IDs must be integers', 400)
 
+        filter_ = and_(
+            SecurityTestsDAST.project_id == project.id,
+            SecurityTestsDAST.id.in_(delete_ids)
+        )
+
+        self.rpc.timeout(3).scheduling_delete_schedules(
+            self.get_schedules_ids(filter_)
+        )
+
         SecurityTestsDAST.query.filter(
-            and_(
-                SecurityTestsDAST.project_id == project.id,
-                SecurityTestsDAST.id.in_(delete_ids)
-            )
+            filter_
         ).delete()
         SecurityTestsDAST.commit()
+
         return make_response({'ids': delete_ids}, 200)
 
     def post(self, project_id: int):
@@ -53,8 +81,23 @@ class SecurityTestsApi(Resource, RpcMixin):
         if errors:
             return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
+
+        # log.warning('TEST DATA')
+        # log.warning(test_data)
+
+        schedules = test_data.pop('scheduling', [])
+        # log.warning('schedules')
+        # log.warning(schedules)
+
         test = SecurityTestsDAST(**test_data)
         test.insert()
+
+        # for s in schedules:
+        #     log.warning('!!!adding schedule')
+        #     log.warning(s)
+        #     test.add_schedule(s, commit_immediately=False)
+        # test.commit()
+        test.handle_change_schedules(schedules)
 
         threshold = SecurityThresholds(
             project_id=test.project_id,

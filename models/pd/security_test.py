@@ -3,22 +3,10 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Json, validator, AnyUrl, parse_obj_as, root_validator, ValidationError
 
-
-@root_validator(pre=True, allow_reuse=True)
-def empty_str_to_none(cls, values):
-    removed = []
-    # print('\nROOT', values)
-    for k in list(values.keys()):
-        if values[k] == '':
-            removed.append(k)
-            del values[k]
-            # values[k] = None
-    # print('\tROOT removed', removed)
-    return values
+from ..api_tests import SecurityTestsDAST
 
 
 def test_param_model_factory(required_params: Union[list, set, tuple] = None, type_mapping_by_name: dict = None):
-
     class TestParameter(BaseModel):
         class Config:
             anystr_strip_whitespace = True
@@ -34,7 +22,7 @@ def test_param_model_factory(required_params: Union[list, set, tuple] = None, ty
         }
 
         # _empty_str_to_none = empty_str_to_none
-        
+
         name: str
         type: Optional[str] = 'string'
         description: Optional[str] = ''
@@ -50,7 +38,7 @@ def test_param_model_factory(required_params: Union[list, set, tuple] = None, ty
             # print('default validator', values)
             name = values.get('name')
 
-            type_ = values.get('type', str) 
+            type_ = values.get('type', str)
             if cls._type_mapping_by_name.get(name):
                 type_ = cls._type_mapping_by_name.get(name)
             elif cls._type_mapping.get(type_):
@@ -84,6 +72,16 @@ def test_param_model_factory(required_params: Union[list, set, tuple] = None, ty
     return TestParameter
 
 
+@root_validator(pre=True, allow_reuse=True)
+def empty_str_to_none(cls, values):
+    removed = []
+    for k in list(values.keys()):
+        if values[k] == '':
+            removed.append(k)
+            del values[k]
+    return values
+
+
 class SecurityTestParams(BaseModel):
     _test_params_mapping = {
         'url to scan': 'urls_to_scan',
@@ -96,16 +94,54 @@ class SecurityTestParams(BaseModel):
     urls_exclusions: Optional[List[AnyUrl]] = []
     scan_location: Optional[str] = ''
 
-    test_parameters: List[test_param_model_factory(['url to scan'], type_mapping_by_name={'url to scan': List[AnyUrl]})]
+    test_parameters: List[test_param_model_factory(type_mapping_by_name={'url to scan': List[AnyUrl]})]
 
     @validator('test_parameters')
     def set_values_from_test_params(cls, value, values):
+        from pylon.core.tools import log
+        log.info('validator test_parameters called')
         for i in value:
             # print('i', i)
             # print('i in', i.name in cls._test_params_mapping.keys())
             if i.name in cls._test_params_mapping.keys():
                 values[cls._test_params_mapping[i.name]] = i.default
         return value
+
+    @classmethod
+    def from_orm(cls, db_obj: SecurityTestsDAST):
+        # from pylon.core.tools import log
+        # log.info(f'FROM ORM {dict(test_parameters=db_obj.test_parameters,urls_to_scan=db_obj.urls_to_scan,urls_exclusions=[] if db_obj.urls_exclusions == [""] else db_obj.urls_exclusions,scan_location=db_obj.scan_location)}')
+        instance = cls(
+            test_parameters=db_obj.test_parameters,
+            urls_to_scan=db_obj.urls_to_scan,
+            urls_exclusions=[] if db_obj.urls_exclusions == [''] else db_obj.urls_exclusions,
+            scan_location=db_obj.scan_location
+        )
+        # instance = cls(**db_obj.__dict__)
+        return instance
+
+    def update(self, other: 'SecurityTestParams'):
+        test_params_names = set(map(lambda tp: tp.name, other.test_parameters))
+        modified_params = other.test_parameters
+        for tp in self.test_parameters:
+            if tp.name not in test_params_names:
+                modified_params.append(tp)
+        self.test_parameters = modified_params
+        if other.urls_to_scan:
+            self.urls_to_scan = other.urls_to_scan
+        if other.urls_exclusions and other.urls_exclusions != ['']:
+            self.urls_exclusions = other.urls_exclusions
+        if other.scan_location:
+            self.scan_location = other.scan_location
+
+
+class SecurityTestParamsCommon(SecurityTestParams):
+    test_parameters: List[
+        test_param_model_factory(
+            required_params=['url to scan'],
+            type_mapping_by_name={'url to scan': List[AnyUrl]}
+        )
+    ]
 
 
 class SecurityTestCommon(BaseModel):
@@ -119,25 +155,6 @@ class SecurityTestCommon(BaseModel):
 
     @root_validator
     def set_uuid(cls, values):
-        # print('RV', values)
         if not values.get('test_uid'):
             values['test_uid'] = str(uuid4())
         return values
-
-
-if __name__ == '__main__':
-    import json
-    source = json.loads('''
-        {"name":"df","description":"","test_parameters":[{"_data":{},"name":"URL to scan","_name_class":"disabled","_name_data":{},"default":"","_default_data":{},"type":"URLs","_type_class":"disabled","_type_data":{},"description":"Data","_description_class":"disabled","_description_data":{}},{"_data":{},"name":"Exclusions","_name_class":"disabled","_name_data":{},"default":"","_default_data":{},"type":"List","_type_class":"disabled","_type_data":{},"description":"Data","_description_class":"disabled","_description_data":{}},{"_data":{},"name":"Scan location","_name_class":"disabled","_name_data":{},"default":"Carrier default config","_default_data":{},"type":"Item","_type_class":"disabled","_type_data":{},"description":"Data","_description_class":"disabled","_description_data":{}}],"integrations":{},"security_scheduling":[]}
-    ''')
-    tp = json.loads('''
-    {"default":"","description":"Data","name":"Exclusions","type":"List","_description_class":"disabled","_name_class":"disabled","_type_class":"disabled"}
-    ''')
-    # x = SecurityTestParams(test_parameters=source['test_parameters'])
-    # print(x.test_parameters)
-    # print(SecurityTestParams.__dict__)
-    print(SecurityTestCommon(**source, project_id=1, project_name='qqq').dict())
-
-    # pd_tp = test_param_model_factory(['exclusions1'])
-    # pd_obj = pd_tp(**tp)
-    # print(pd_obj.dict())

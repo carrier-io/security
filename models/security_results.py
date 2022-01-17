@@ -89,7 +89,6 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
         # if created:
         #     minio_client.configure_bucket_lifecycle(self.bucket_name, 7)
 
-
     def to_json(self, exclude_fields: tuple = ()) -> dict:
         test_param = super().to_json(exclude_fields)
 

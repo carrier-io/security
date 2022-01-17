@@ -1,8 +1,9 @@
 import json
 from queue import Empty
 from typing import Tuple, Union
-
+from sqlalchemy import and_
 from pydantic import ValidationError
+
 from pylon.core.tools import log
 
 from .models.api_tests import SecurityTestsDAST
@@ -97,7 +98,7 @@ def parse_test_data(project_id: int, request_data: dict, *,
         except Empty:
             log.warning(f'Cannot find parser for {k}')
             if skip_validation_if_undefined:
-                test_data.update(v)
+                test_data.update({k: v})
             # errors.append(ValidationErrorPD('alert_bar', f'Cannot find parser for {i}'))
             # return make_response(ValidationErrorPD('alert_bar', f'Cannot find parser for {i}').json(), 404)
         except ValidationError as e:
@@ -129,3 +130,6 @@ def parse_test_data(project_id: int, request_data: dict, *,
                 return test_data, errors
 
     return test_data, errors
+
+
+
