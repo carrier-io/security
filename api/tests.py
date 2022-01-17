@@ -1,117 +1,63 @@
-from uuid import uuid4
-from json import loads
+import json
 
-from flask_restful import abort
+from flask_restful import Resource
 from sqlalchemy import and_
-from flask import request
-from pylon.core.tools import log
+from flask import request, make_response
 
 from ..rpc import security_results_or_404
-from ...shared.utils.restApi import RestResource
-from ...shared.utils.api_utils import build_req_parser, get, str2bool
-
+from ..utils import run_test, parse_test_data
 from ..models.api_tests import SecurityTestsDAST
-from ..models.security_results import SecurityResultsDAST
 from ..models.security_thresholds import SecurityThresholds
-from .utils import exec_test, format_test_parameters, ValidationError
+
+from ...shared.utils.rpc import RpcMixin
+from ...shared.utils.api_utils import get
 
 
-class SecurityTestsApi(RestResource):
-    # _get_rules = (
-    #     dict(name="offset", type=int, default=0, location="args"),
-    #     dict(name="limit", type=int, default=0, location="args"),
-    #     dict(name="search", type=str, default="", location="args"),
-    #     dict(name="sort", type=str, default="", location="args"),
-    #     dict(name="order", type=str, default="", location="args"),
-    #     dict(name="name", type=str, location="args"),
-    #     dict(name="filter", type=str, location="args")
-    # )
-
-    # _delete_rules = (
-    #     dict(name="id[]", type=int, action="append", location="args"),
-    # )
-    #
-    # def __init__(self):
-    #     super().__init__()
-    #     self.__init_req_parsers()
-
-    # def __init_req_parsers(self):
-        # self.get_parser = build_req_parser(rules=self._get_rules)
-        # self.post_parser = build_req_parser(rules=self._post_rules)
-        # self.delete_parser = build_req_parser(rules=self._delete_rules)
-
+class SecurityTestsApi(Resource, RpcMixin):
     def get(self, project_id: int):
-        # args = self.get_parser.parse_args(strict=False)
-        reports = []
-        # total, res = get(project_id, args, SecurityTestsDAST)
         total, res = get(project_id, request.args, SecurityTestsDAST)
-        for each in res:
-            reports.append(each.to_json())
-        return {"total": total, "rows": reports}
+
+        return make_response(
+            {"total": total, "rows": [i.to_json() for i in res]},
+            200
+        )
 
     def delete(self, project_id: int):
-        # args = self.delete_parser.parse_args(strict=False)
-        project = self.rpc.project_get_or_404(project_id=project_id)
-        query_result = SecurityTestsDAST.query.filter(
-            # and_(SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id.in_(args["id[]"]))
-            and_(SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id.in_(request.json["id[]"]))
-        ).all()
-        for each in query_result:
-            each.delete()
-        return {"message": "deleted"}
+        project = self.rpc.call.project_get_or_404(project_id=project_id)
+        try:
+            delete_ids = list(map(int, request.args["id[]"].split(',')))
+        except TypeError:
+            return make_response('IDs must be integers', 400)
+
+        SecurityTestsDAST.query.filter(
+            and_(
+                SecurityTestsDAST.project_id == project.id,
+                SecurityTestsDAST.id.in_(delete_ids)
+            )
+        ).delete()
+        SecurityTestsDAST.commit()
+        return make_response({'ids': delete_ids}, 200)
 
     def post(self, project_id: int):
         """
         Post method for creating and running test
         """
 
-        run_test = request.json.get('run_test', False)
-
-        errors = []
-        test_name = request.json.get('name', None)
-        if not test_name:
-            errors.append({
-                'field': 'name',
-                'feedback': 'Test name is required'
-            })
-
-        project = self.rpc.project_get_or_404(project_id=project_id)
-
-        try:
-            test_parameters = format_test_parameters(request.json['parameters'])
-
-        except ValidationError as e:
-            errors.append({
-                'field': 'parameters',
-                'feedback': e.data
-            })
+        run_test_ = request.json.pop('run_test', False)
+        test_data, errors = parse_test_data(
+            project_id=project_id,
+            request_data=request.json,
+            rpc=self.rpc,
+        )
 
         if errors:
-            return abort(400, data=errors)
+            return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
-        urls_to_scan = [test_parameters.pop('url to scan').get('default')]
-        urls_exclusions = test_parameters.pop('exclusions').get('default', [])
-        scan_location = test_parameters.pop('scan location').get('default', '')
-
-        integrations = request.json['integrations']
-
-        test_uid = str(uuid4())
-        test = SecurityTestsDAST(
-            project_id=project.id,
-            project_name=project.name,
-            test_uid=test_uid,
-            name=test_name,
-            description=request.json['description'],
-            urls_to_scan=urls_to_scan,
-            urls_exclusions=urls_exclusions,
-            scan_location=scan_location,
-            test_parameters=test_parameters.values(),
-            integrations=integrations,
-        )
+        test = SecurityTestsDAST(**test_data)
         test.insert()
 
         threshold = SecurityThresholds(
-            project_id=project.id,
+            project_id=test.project_id,
             test_name=test.name,
             test_uid=test.test_uid,
             critical=-1,
@@ -127,29 +73,12 @@ class SecurityTestsApi(RestResource):
         )
         threshold.insert()
 
-        if run_test:
-            security_results = SecurityResultsDAST(
-                project_id=project.id,
-                test_id=test.id,
-                test_uid=test_uid,
-                test_name=test.name
-            )
-            security_results.insert()
-
-            event = []
-            test.results_test_id = security_results.id
-            test.commit()
-            event.append(test.configure_execution_json("cc"))
-
-            response = exec_test(project.id, event)
-            response['result_id'] = security_results.id
-            return response
-
+        if run_test_:
+            return run_test(test)
         return test.to_json()
 
 
-class SecurityTestsRerun(RestResource):
-
+class SecurityTestsRerun(Resource):
     def post(self, security_results_dast_id: int):
         """
         Post method for re-running test
@@ -166,28 +95,14 @@ class SecurityTestsRerun(RestResource):
                 test_uid=test_config['test_uid'],
                 name=test_config['name'],
                 description=test_config['description'],
+
                 urls_to_scan=test_config['urls_to_scan'],
                 urls_exclusions=test_config['urls_exclusions'],
                 scan_location=test_config['scan_location'],
                 test_parameters=test_config['test_parameters'],
+
                 integrations=test_config['integrations'],
             )
             test.insert()
 
-        security_results = SecurityResultsDAST(
-            project_id=test.project_id,
-            test_id=test.id,
-            test_uid=test.test_uid,
-            test_name=test.name
-        )
-        security_results.insert()
-
-        event = []
-        test.results_test_id = security_results.id
-        test.commit()
-        event.append(test.configure_execution_json("cc"))
-
-        response = exec_test(test_config['project_id'], event)
-        response['result_id'] = security_results.id
-        return response
-
+        return run_test(test)

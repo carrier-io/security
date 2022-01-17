@@ -12,7 +12,6 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-import string
 from json import dumps
 
 from sqlalchemy import Column, Integer, String, ARRAY, JSON, DateTime
@@ -25,7 +24,6 @@ from ...projects.connectors.secrets import get_project_hidden_secrets, unsecret
 
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 
-from ...shared.utils.api_utils import format_date
 
 
 class SecurityTestsDAST(AbstractBaseMixin, Base):
@@ -42,6 +40,7 @@ class SecurityTestsDAST(AbstractBaseMixin, Base):
     urls_exclusions = Column(ARRAY(String(128)))
     scan_location = Column(String(128), nullable=False)
     test_parameters = Column(ARRAY(JSON), nullable=True)
+
     integrations = Column(JSON, nullable=True)
 
     results_test_id = Column(Integer)

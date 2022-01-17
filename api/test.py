@@ -1,172 +1,69 @@
-from json import loads
+import json
+from typing import Union
 
-from flask import request
-from flask_restful import abort
+from flask import request, make_response
+from flask_restful import abort, Resource
 from sqlalchemy import and_
 
-# from ..utils import json_hook
-from ...shared.utils.restApi import RestResource
-from ...shared.utils.api_utils import build_req_parser
-
+from ..utils import run_test, parse_test_data
 from ..models.api_tests import SecurityTestsDAST
 from ..models.security_results import SecurityResultsDAST
 from ..models.security_reports import SecurityReport
-from .utils import exec_test, format_test_parameters, ValidationError
+
+from ...shared.utils.rpc import RpcMixin
 
 
-class SecurityTestApi(RestResource):
-    # _post_rules = (
-    #     dict(name="test_name", type=str, required=False, location='json'),
-    # )
+class SecurityTestApi(Resource, RpcMixin):
 
-    # _put_rules = (
-    #     dict(name="name", type=str, location='json'),
-    #     dict(name="description", type=str, location='json'),
-    #     dict(name="parameters", type=str, location='json'),
-    #     dict(name="integrations", type=str, location='json'),
-    #     dict(name="run_test", type=bool, location='json'),
-    # )
-
-    # def __init__(self):
-    #     super(SecurityTestApi, self).__init__()
-    #     self.__init_req_parsers()
-
-    # def __init_req_parsers(self):
-    #     self.post_parser = build_req_parser(rules=self._post_rules)
-    #     self.put_parser = build_req_parser(rules=self._put_rules)
-
-    def get(self, project_id, test_id):
-        project = self.rpc.project_get_or_404(project_id=project_id)
-
+    @staticmethod
+    def get_filter(project_id: int, test_id: Union[int, str]):
         if isinstance(test_id, int):
-            _filter = and_(
-                SecurityResultsDAST.project_id == project.id, SecurityResultsDAST.id == test_id
+            return and_(
+                SecurityTestsDAST.project_id == project_id,
+                SecurityTestsDAST.id == test_id
             )
-        else:
-            _filter = and_(
-                SecurityResultsDAST.project_id == project.id, SecurityResultsDAST.test_uid == test_id
-            )
-        test = SecurityResultsDAST.query.filter(_filter).first()
+        return and_(
+            SecurityTestsDAST.project_id == project_id,
+            SecurityTestsDAST.test_uid == test_id
+        )
+
+    def get(self, project_id: int, test_id: Union[int, str]):
+        test = SecurityResultsDAST.query.filter(self.get_filter(project_id, test_id)).first()
         test = test.to_json()
         scanners = SecurityReport.query.with_entities(SecurityReport.tool_name).filter(
-            and_(
-                SecurityReport.project_id == project.id,
-                SecurityReport.report_id == test_id
-            )
+            self.get_filter(project_id, test_id)
         ).distinct().all()
 
         if scanners:
             test["scanners"] = ", ".join([scan[0] for scan in scanners])
         return test
 
-    def put(self, project_id, test_id):
+    def put(self, project_id: int, test_id: Union[int, str]):
         """ Update test data """
-        run_test = request.json.get('run_test', False)
-
-        errors = []
-
-        test_name = request.json.get('name', None)
-        if not test_name:
-            errors.append({
-                'field': 'name',
-                'feedback': 'Test name is required'
-            })
-
-        try:
-            test_parameters = format_test_parameters(request.json['parameters'])
-        except ValidationError as e:
-            errors.append({
-                'field': 'parameters',
-                'feedback': e.data
-            })
+        run_test_ = request.json.pop('run_test', False)
+        test_data, errors = parse_test_data(
+            project_id=project_id,
+            request_data=request.json,
+            rpc=self.rpc,
+            common_kwargs={'exclude': {'test_uid', }}
+        )
 
         if errors:
-            return abort(400, data=errors)
+            return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
-        urls_to_scan = [test_parameters.pop('url to scan').get('default')]
-        urls_exclusions = test_parameters.pop('exclusions').get('default', [])
-        scan_location = test_parameters.pop('scan location').get('default', '')
-
-        integrations = request.json['integrations']
-
-        update_values = {
-            "name": test_name,
-            'description': request.json['description'],
-            "urls_to_scan": urls_to_scan,
-            "urls_exclusions": urls_exclusions,
-            'scan_location': scan_location,
-            'test_parameters': test_parameters.values(),
-            'integrations': integrations,
-        }
-
-        project = self.rpc.project_get_or_404(project_id=project_id)
-
-        if isinstance(test_id, int):
-            _filter = and_(
-                SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id == test_id
-            )
-        else:
-            _filter = and_(
-                SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.test_uid == test_id
-            )
-        test = SecurityTestsDAST.query.filter(_filter)
-
-        test.update(update_values)
+        test = SecurityTestsDAST.query.filter(self.get_filter(project_id, test_id))
+        test.update(test_data)
         SecurityTestsDAST.commit()
 
         test = test.first()
-        if run_test:
-            security_results = SecurityResultsDAST(
-                project_id=project.id,
-                test_id=test.id,
-                test_uid=test.test_uid,
-                test_name=test.name
-            )
-            security_results.insert()
+        if run_test_:
+            return run_test(test)
 
-            event = []
-            test.results_test_id = security_results.id
-            test.commit()
-            event.append(test.configure_execution_json("cc"))
+        return make_response(test.to_json(), 200)
 
-            response = exec_test(project.id, event)
-            response['result_id'] = security_results.id
-            return response
-
-        return {"message": "Parameters for test were updated"}
-
-    def post(self, project_id, test_id):
+    def post(self, project_id: int, test_id: Union[int, str]):
         """ Run test """
-        project = self.rpc.project_get_or_404(project_id=project_id)
-
-        if isinstance(test_id, int):
-            _filter = and_(
-                SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.id == test_id
-            )
-        else:
-            _filter = and_(
-                SecurityTestsDAST.project_id == project.id, SecurityTestsDAST.test_uid == test_id
-            )
-        test = SecurityTestsDAST.query.filter(_filter).first()
-
-        event = list()
-
-        security_results = SecurityResultsDAST(
-            project_id=project.id,
-            test_id=test.id,
-            test_uid=test.test_uid,
-            test_name=request.json["test_name"],
-        )
-        security_results.insert()
-
-        test.results_test_id = security_results.id
-        test.commit()
-
-        event.append(test.configure_execution_json("cc"))
-
-        if request.json.get("type") == "config":
-            return event[0]
-
-        response = exec_test(project.id, event)
-        response['result_id'] = security_results.id
-        return response
+        test = SecurityTestsDAST.query.filter(
+            self.get_filter(project_id, test_id)
+        ).first()
+        return run_test(test, config_only=request.json.get('type', False))
