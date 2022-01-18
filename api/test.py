@@ -1,8 +1,9 @@
 import json
-from typing import Union
+from typing import Union, List
 
 from flask import request, make_response
 from flask_restful import abort, Resource
+from pylon.core.tools import log
 from sqlalchemy import and_
 
 from ..utils import run_test, parse_test_data
@@ -14,29 +15,12 @@ from ...shared.utils.rpc import RpcMixin
 
 
 class SecurityTestApi(Resource, RpcMixin):
-
-    @staticmethod
-    def get_filter(project_id: int, test_id: Union[int, str]):
-        if isinstance(test_id, int):
-            return and_(
-                SecurityTestsDAST.project_id == project_id,
-                SecurityTestsDAST.id == test_id
-            )
-        return and_(
-            SecurityTestsDAST.project_id == project_id,
-            SecurityTestsDAST.test_uid == test_id
-        )
-
     def get(self, project_id: int, test_id: Union[int, str]):
-        test = SecurityResultsDAST.query.filter(self.get_filter(project_id, test_id)).first()
-        test = test.to_json()
-        scanners = SecurityReport.query.with_entities(SecurityReport.tool_name).filter(
-            self.get_filter(project_id, test_id)
-        ).distinct().all()
+        log.warning('SecurityTestApi GET CALLED')
+        # test = SecurityResultsDAST.query.filter(SecurityResultsDAST(project_id, test_id)).first()
+        # test = test.to_json()
 
-        if scanners:
-            test["scanners"] = ", ".join([scan[0] for scan in scanners])
-        return test
+        return make_response(None, 204)
 
     def put(self, project_id: int, test_id: Union[int, str]):
         """ Update test data """
@@ -52,10 +36,28 @@ class SecurityTestApi(Resource, RpcMixin):
             return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
         test = SecurityTestsDAST.query.filter(self.get_filter(project_id, test_id))
+
+        schedules = test_data.pop('scheduling', [])
+        # log.warning('schedules')
+        # log.warning(schedules)
+
+        # test = SecurityTestsDAST(**test_data)
+        # test.insert()
+        #
+
         test.update(test_data)
         SecurityTestsDAST.commit()
+        test = test.one()
 
-        test = test.first()
+        # for s in schedules:
+        #     log.warning('!!!adding schedule')
+        #     log.warning(s)
+        #     test.add_schedule(s, commit_immediately=False)
+        # test.commit()
+        test.handle_change_schedules(schedules)
+
+
+        # test = test.first()
         if run_test_:
             return run_test(test)
 
@@ -67,3 +69,6 @@ class SecurityTestApi(Resource, RpcMixin):
             self.get_filter(project_id, test_id)
         ).first()
         return run_test(test, config_only=request.json.get('type', False))
+
+
+
