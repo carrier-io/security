@@ -8,8 +8,8 @@ from sqlalchemy import and_
 
 from ..utils import run_test, parse_test_data
 from ..models.api_tests import SecurityTestsDAST
-from ..models.security_results import SecurityResultsDAST
-from ..models.security_reports import SecurityReport
+# from ..models.security_results import SecurityResultsDAST
+# from ..models.security_reports import SecurityReport
 
 from ...shared.utils.rpc import RpcMixin
 
@@ -35,7 +35,7 @@ class SecurityTestApi(Resource, RpcMixin):
         if errors:
             return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
-        test = SecurityTestsDAST.query.filter(self.get_filter(project_id, test_id))
+        test = SecurityTestsDAST.query.filter(SecurityTestsDAST.get_api_filter(project_id, test_id))
 
         schedules = test_data.pop('scheduling', [])
         # log.warning('schedules')
@@ -66,7 +66,7 @@ class SecurityTestApi(Resource, RpcMixin):
     def post(self, project_id: int, test_id: Union[int, str]):
         """ Run test """
         test = SecurityTestsDAST.query.filter(
-            self.get_filter(project_id, test_id)
+            SecurityTestsDAST.get_api_filter(project_id, test_id)
         ).first()
         return run_test(test, config_only=request.json.get('type', False))
 
