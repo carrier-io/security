@@ -73,14 +73,14 @@ def parse_test_data(project_id: int, request_data: dict, *,
     test_description = request_data.pop('description', None)
 
     try:
-        test_data = rpc.call.security_test_create_common_parameters(
+        from .rpc import parse_common_test_parameters
+        test_data = parse_common_test_parameters(
             project_id=project_id,
             name=test_name,
             description=test_description,
             **common_kwargs
         )
     except ValidationError as e:
-        # print('test_data_error 1', e)
         test_data = dict()
         errors.extend(e.errors())
         if raise_immediately:
@@ -88,10 +88,10 @@ def parse_test_data(project_id: int, request_data: dict, *,
 
     for k, v in request_data.items():
         try:
-            # print(f'security test create :: parsing :: [{k}]')
+            # log.info(f'security test create :: parsing :: [{k}]')
             test_data.update(rpc.call_function_with_timeout(
                 func=f'security_test_create_{k}',
-                timeout=1,
+                timeout=2,
                 data=v,
                 **test_create_rpc_kwargs
             ))
@@ -99,31 +99,15 @@ def parse_test_data(project_id: int, request_data: dict, *,
             log.warning(f'Cannot find parser for {k}')
             if skip_validation_if_undefined:
                 test_data.update({k: v})
-            # errors.append(ValidationErrorPD('alert_bar', f'Cannot find parser for {i}'))
-            # return make_response(ValidationErrorPD('alert_bar', f'Cannot find parser for {i}').json(), 404)
         except ValidationError as e:
-            # err_list = e.errors()
-            # for i in err_list:
-            #     log.warning('QQQ')
-            #     log.warning(type(i))
-            #     log.warning(i)
-            #     i['loc'] = [k, *i['loc']]
-            # errors.extend(err_list)
-
             for i in e.errors():
-                # log.warning('QQQ')
-                # log.warning(type(i))
-                # log.warning(i)
                 i['loc'] = [k, *i['loc']]
-            # log.warning('YYY')
-            # log.warning(e.errors())
             errors.extend(e.errors())
 
             if raise_immediately:
                 return test_data, errors
         except Exception as e:
-            # log.warning('Exception as e')
-            # log.warning(type(e))
+            log.warning(f'Exception as e {type(e)}')
             e.loc = [k, *getattr(e, 'loc', [])]
             errors.append(ValidationErrorPD(e.loc, str(e)))
             if raise_immediately:
