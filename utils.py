@@ -80,7 +80,7 @@ def parse_test_data(project_id: int, request_data: dict, *,
             **common_kwargs
         )
     except ValidationError as e:
-        print('test_data_error 1', e)
+        # print('test_data_error 1', e)
         test_data = dict()
         errors.extend(e.errors())
         if raise_immediately:
@@ -88,7 +88,7 @@ def parse_test_data(project_id: int, request_data: dict, *,
 
     for k, v in request_data.items():
         try:
-            print(f'security test create :: parsing :: [{k}]')
+            # print(f'security test create :: parsing :: [{k}]')
             test_data.update(rpc.call_function_with_timeout(
                 func=f'security_test_create_{k}',
                 timeout=1,
@@ -111,19 +111,19 @@ def parse_test_data(project_id: int, request_data: dict, *,
             # errors.extend(err_list)
 
             for i in e.errors():
-                log.warning('QQQ')
-                log.warning(type(i))
-                log.warning(i)
+                # log.warning('QQQ')
+                # log.warning(type(i))
+                # log.warning(i)
                 i['loc'] = [k, *i['loc']]
-            log.warning('YYY')
-            log.warning(e.errors())
+            # log.warning('YYY')
+            # log.warning(e.errors())
             errors.extend(e.errors())
 
             if raise_immediately:
                 return test_data, errors
         except Exception as e:
-            log.warning('Exception as e')
-            log.warning(type(e))
+            # log.warning('Exception as e')
+            # log.warning(type(e))
             e.loc = [k, *getattr(e, 'loc', [])]
             errors.append(ValidationErrorPD(e.loc, str(e)))
             if raise_immediately:
