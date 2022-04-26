@@ -39,6 +39,7 @@ class Module(module.ModuleModel):
 
     def init(self):
         """ Init module """
+        return
         log.info(f'Initializing module {self.descriptor.name}')
         init_db()
         from .api.tests import SecurityTestsApi
