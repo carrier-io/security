@@ -1,4 +1,4 @@
-from ..shared.db_manager import Base, engine
+from tools import db
 
 
 def init_db():
@@ -8,5 +8,5 @@ def init_db():
 
     from .models.security_details import SecurityDetails
     from .models.security_reports import SecurityReport
-    Base.metadata.create_all(bind=engine)
+    db.Base.metadata.create_all(bind=db.engine)
 

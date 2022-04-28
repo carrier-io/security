@@ -3,26 +3,18 @@ import json
 import gzip
 
 import flask
+from flask_restful import Resource
 from pylon.core.tools import log
 from pylon.core.seeds.minio import MinIOHelper
 
-from ...shared.utils.restApi import RestResource
-from ...shared.utils.api_utils import build_req_parser
+# from ...shared.utils.restApi import RestResource
+# from ...shared.utils.api_utils import build_req_parser
 
 
-class GetLokiUrl(RestResource):
-    _get_rules = (
-        dict(name="type", type=str, location="args"),
-    )
+class API(Resource):
 
-    def __init__(self, settings):
-        super().__init__()
-        self.__init_req_parsers()
-        from flask import current_app
-        self.settings = current_app.config["CONTEXT"]
-
-    def __init_req_parsers(self):
-        self.get_parser = build_req_parser(rules=self._get_rules)
+    def __init__(self, module):
+        self.module = module
 
     def get(self, project_id: int):
 

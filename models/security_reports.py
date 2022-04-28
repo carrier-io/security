@@ -1,8 +1,8 @@
 from sqlalchemy import String, Column, Integer, Text
 
-from ...shared.db_manager import Base
-from ...shared.models.abstract_base import AbstractBaseMixin
-
+# from ...shared.db_manager import Base
+# from ...shared.models.abstract_base import AbstractBaseMixin
+from tools import db_tools, db
 
 import sqlalchemy.types as types
 
@@ -26,7 +26,7 @@ class ChoiceType(types.TypeDecorator):
             return [k for k, v in self.choices.items() if v.lower() == value.lower()][0]
 
 
-class SecurityReport(AbstractBaseMixin, Base):
+class SecurityReport(db_tools.AbstractBaseMixin, db.Base):
 
     SEVERITY_CHOICES = {
         'critical': 'critical',

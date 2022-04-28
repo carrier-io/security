@@ -6,25 +6,30 @@ from pylon.core.tools import log
 from flask import request, make_response
 from sqlalchemy import and_
 
-from ..rpc import security_results_or_404
-from ..utils import run_test, parse_test_data
-from ..models.api_tests import SecurityTestsDAST
-from ..models.security_thresholds import SecurityThresholds
+from ...models.api_tests import SecurityTestsDAST
+from ...models.security_thresholds import SecurityThresholds
 
-from ...shared.utils.rpc import RpcMixin
-from ...shared.utils.api_utils import get
+# from ...shared.utils.rpc import RpcMixin
+# from ...shared.utils.api_utils import get
+
+from tools import api_tools
+
+from ...utils import parse_test_data, run_test
 
 
-class SecurityTestsApi(Resource, RpcMixin):
+class API(Resource):
+    def __init__(self, module):
+        self.module = module
+
     def get(self, project_id: int):
-        total, res = get(project_id, request.args, SecurityTestsDAST)
+        total, res = api_tools.get(project_id, request.args, SecurityTestsDAST)
         rows = []
         for i in res:
             test = i.to_json()
             schedules = test.pop('schedules', [])
             if schedules:
                 try:
-                    test['scheduling'] = self.rpc.timeout(2).scheduling_security_load_from_db_by_ids(schedules)
+                    test['scheduling'] = self.context.rpc_manager.timeout(2).scheduling_security_load_from_db_by_ids(schedules)
                 except Empty:
                     ...
             test['scanners'] = i.scanners
@@ -44,7 +49,7 @@ class SecurityTestsApi(Resource, RpcMixin):
         return r
 
     def delete(self, project_id: int):
-        project = self.rpc.call.project_get_or_404(project_id=project_id)
+        project = self.context.rpc_manager.call.project_get_or_404(project_id=project_id)
         try:
             delete_ids = list(map(int, request.args["id[]"].split(',')))
         except TypeError:
@@ -55,9 +60,12 @@ class SecurityTestsApi(Resource, RpcMixin):
             SecurityTestsDAST.id.in_(delete_ids)
         )
 
-        self.rpc.timeout(3).scheduling_delete_schedules(
-            self.get_schedules_ids(filter_)
-        )
+        try:
+            self.context.rpc_manager.timeout(3).scheduling_delete_schedules(
+                self.get_schedules_ids(filter_)
+            )
+        except Empty:
+            ...
 
         SecurityTestsDAST.query.filter(
             filter_
@@ -75,7 +83,7 @@ class SecurityTestsApi(Resource, RpcMixin):
         test_data, errors = parse_test_data(
             project_id=project_id,
             request_data=request.json,
-            rpc=self.rpc,
+            rpc=self.context.rpc_manager,
         )
 
         if errors:

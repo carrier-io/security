@@ -1,22 +1,25 @@
 import hashlib
 
 from flask import request, abort
+from flask_restful import Resource
 from sqlalchemy import and_, func, or_, asc
 
-from ...shared.utils.restApi import RestResource
-from ...shared.utils.api_utils import build_req_parser
+# from ...shared.utils.restApi import RestResource
+# from ...shared.utils.api_utils import build_req_parser
 
-from ..models.security_reports import SecurityReport
-from ..models.security_details import SecurityDetails
-from ..models.security_results import SecurityResultsDAST
+from ...models.security_reports import SecurityReport
+from ...models.security_details import SecurityDetails
+from ...models.security_results import SecurityResultsDAST
 
 
-class FindingsAPI(RestResource):
+class API(Resource):
+    def __init__(self, module):
+        self.module = module
 
-    _get_rules = (
-        # dict(name="type", type=str, location="args"),
-        dict(name="status", type=str, location="args"),
-    )
+    # _get_rules = (
+    #     # dict(name="type", type=str, location="args"),
+    #     dict(name="status", type=str, location="args"),
+    # )
 
     # _get_rules = (
     #     dict(name="offset", type=int, default=0, location="args"),
@@ -28,29 +31,20 @@ class FindingsAPI(RestResource):
     #     dict(name="filter", type=str, location="args")
     # )
 
-    _post_rules = (
-        dict(name="status", type=str, location="form"),
-    )
-
-    put_rules = (
-        dict(name="severity", type=str, location="json"),
-        dict(name="status", type=str, location="json"),
-        dict(name="issues_id", type=list, default=[], location="json"),
-        dict(name="issue_hashes", type=list, default=[], location="json")
-    )
-
-    def __init__(self):
-        super(FindingsAPI, self).__init__()
-        self.__init_req_parsers()
-
-    def __init_req_parsers(self):
-        self._parser_get = build_req_parser(rules=self._get_rules)
-        self._parser_post = build_req_parser(rules=self._post_rules)
-        self._parser_put = build_req_parser(rules=self.put_rules)
+    # _post_rules = (
+    #     dict(name="status", type=str, location="form"),
+    # )
+    #
+    # put_rules = (
+    #     dict(name="severity", type=str, location="json"),
+    #     dict(name="status", type=str, location="json"),
+    #     dict(name="issues_id", type=list, default=[], location="json"),
+    #     dict(name="issue_hashes", type=list, default=[], location="json")
+    # )
 
     def get(self, project_id: int, test_id: int):
 
-        args = self._parser_get.parse_args(strict=False)
+        args = request.args
 
         filter_ = [
             SecurityReport.project_id == project_id,
@@ -68,7 +62,7 @@ class FindingsAPI(RestResource):
         return results
 
     def put(self, project_id: int, test_id: int):
-        args = self._parser_put.parse_args(strict=False)
+        args = request.json
         issues = args.get('issues_id')
         issue_hashes = args.get('issue_hashes')
         accept_message = {"message": "accepted"}

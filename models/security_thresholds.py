@@ -1,10 +1,11 @@
 from sqlalchemy import String, Column, Integer
 
-from ...shared.db_manager import Base
-from ...shared.models.abstract_base import AbstractBaseMixin
+# from ...shared.db_manager import Base
+# from ...shared.models.abstract_base import AbstractBaseMixin
+from tools import db_tools, db
 
 
-class SecurityThresholds(AbstractBaseMixin, Base):
+class SecurityThresholds(db_tools.AbstractBaseMixin, db.Base):
     __tablename__ = "sec_thresholds"
     id = Column(Integer, primary_key=True)
     project_id = Column(Integer, unique=False, nullable=False)

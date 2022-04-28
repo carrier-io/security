@@ -19,16 +19,18 @@ from typing import List, Union
 from sqlalchemy import Column, Integer, String, ARRAY, JSON, DateTime, and_
 from sqlalchemy.sql import func
 
-from ...shared.utils.rpc import RpcMixin
-from ...shared.db_manager import Base
-from ...shared.models.abstract_base import AbstractBaseMixin
-from ...shared.constants import CURRENT_RELEASE
-from ...projects.connectors.secrets import get_project_hidden_secrets, unsecret
+from tools import rpc_tools, db, db_tools, constants, secrets_tools
+
+# from ...shared.utils.rpc import RpcMixin
+# from ...shared.db_manager import Base
+# from ...shared.models.abstract_base import AbstractBaseMixin
+# from ...shared.constants import CURRENT_RELEASE
+# from ...projects.connectors.secrets import get_project_hidden_secrets, unsecret
 
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 
 
-class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
+class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin):
     __tablename__ = "security_tests_dast"
     id = Column(Integer, primary_key=True)
     project_id = Column(Integer, unique=False, nullable=False)
@@ -160,7 +162,7 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
                 },
             }
             reporters_config["centry_status"] = {
-                "url": unsecret(
+                "url": secrets_tools.unsecret(
                     "{{secret.galloper_url}}",
                     project_id=self.project_id
                 ),
@@ -170,12 +172,12 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
 
 
             reporters_config["galloper"] = {
-                "url": unsecret(
+                "url": secrets_tools.unsecret(
                     "{{secret.galloper_url}}",
                     project_id=self.project_id
                 ),
                 "project_id": f"{self.project_id}",
-                "token": unsecret(
+                "token": secrets_tools.unsecret(
                     "{{secret.auth_token}}",
                     project_id=self.project_id
                 ),
@@ -296,23 +298,23 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
                                 "thresholds": tholds
                             },
                             "false_positive": {
-                                "galloper": unsecret(
+                                "galloper": secrets_tools.unsecret(
                                     "{{secret.galloper_url}}",
                                     project_id=self.project_id
                                 ),
                                 "project_id": f"{self.project_id}",
-                                "token": unsecret(
+                                "token": secrets_tools.unsecret(
                                     "{{secret.auth_token}}",
                                     project_id=self.project_id
                                 )
                             },
                             "ignore_finding": {
-                                "galloper": unsecret(
+                                "galloper": secrets_tools.unsecret(
                                     "{{secret.galloper_url}}",
                                     project_id=self.project_id
                                 ),
                                 "project_id": f"{self.project_id}",
-                                "token": unsecret(
+                                "token": secrets_tools.unsecret(
                                     "{{secret.auth_token}}",
                                     project_id=self.project_id
                                 )
@@ -335,26 +337,26 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
         container = f"getcarrier/dast:latest"
         parameters = {
             "cmd": f"run -b galloper:{job_type}_{self.test_uid} -s {job_type}",
-            "GALLOPER_URL": unsecret(
+            "GALLOPER_URL": secrets_tools.unsecret(
                 "{{secret.galloper_url}}",
                 project_id=self.project_id
             ),
             "GALLOPER_PROJECT_ID": f"{self.project_id}",
-            "GALLOPER_AUTH_TOKEN": unsecret(
+            "GALLOPER_AUTH_TOKEN": secrets_tools.unsecret(
                 "{{secret.auth_token}}",
                 project_id=self.project_id
             ),
         }
         cc_env_vars = {
-            "RABBIT_HOST": unsecret(
+            "RABBIT_HOST": secrets_tools.unsecret(
                 "{{secret.rabbit_host}}",
                 project_id=self.project_id
             ),
-            "RABBIT_USER": unsecret(
+            "RABBIT_USER": secrets_tools.unsecret(
                 "{{secret.rabbit_user}}",
                 project_id=self.project_id
             ),
-            "RABBIT_PASSWORD": unsecret(
+            "RABBIT_PASSWORD": secrets_tools.unsecret(
                 "{{secret.rabbit_password}}",
                 project_id=self.project_id
             )
@@ -364,9 +366,9 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
         if output == "docker":
             return f"docker run --rm -i -t " \
                    f"-e project_id={self.project_id} " \
-                   f"-e galloper_url={unsecret('{{secret.galloper_url}}', project_id=self.project_id)} " \
-                   f"-e token=\"{unsecret('{{secret.auth_token}}', project_id=self.project_id)}\" " \
-                   f"getcarrier/control_tower:{CURRENT_RELEASE} " \
+                   f"-e galloper_url={secrets_tools.unsecret('{{secret.galloper_url}}', project_id=self.project_id)} " \
+                   f"-e token=\"{secrets_tools.unsecret('{{secret.auth_token}}', project_id=self.project_id)}\" " \
+                   f"getcarrier/control_tower:{constants.CURRENT_RELEASE} " \
                    f"-tid {self.test_uid}"
         if output == "cc":
             channel = self.scan_location

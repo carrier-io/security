@@ -9,8 +9,9 @@ from pylon.core.tools import log
 from .models.api_tests import SecurityTestsDAST
 from .models.security_results import SecurityResultsDAST
 
-from ..tasks.api.utils import run_task
+# from ..tasks.api.utils import run_task
 from ..projects.models.statistics import Statistic
+from tools import rpc_tools
 
 
 def run_test(test: SecurityTestsDAST, config_only=False):
@@ -33,9 +34,7 @@ def run_test(test: SecurityTestsDAST, config_only=False):
     response = run_task(test.project_id, event)
     response['redirect'] = f'/task/{response["task_id"]}/results'
 
-    statistic = Statistic.query.filter_by(project_id=test.project_id).first()
-    statistic.dast_scans += 1
-    statistic.commit()
+    rpc_tools.RpcMixin().rpc.call.increment_statistics_dast(test.project_id)
 
     response['result_id'] = security_results.id
     return response
@@ -61,8 +60,7 @@ def parse_test_data(project_id: int, request_data: dict, *,
                     skip_validation_if_undefined: bool = True,
                     ) -> Tuple[dict, list]:
     if not rpc:
-        from ..shared.utils.rpc import RpcMixin
-        rpc = RpcMixin().rpc
+        rpc = rpc_tools.RpcMixin().rpc
 
     common_kwargs = common_kwargs or dict()
     test_create_rpc_kwargs = test_create_rpc_kwargs or dict()
