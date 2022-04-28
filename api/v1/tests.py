@@ -125,35 +125,6 @@ class API(Resource):
         threshold.insert()
 
         if run_test_:
-            return run_test(test)
+            resp = run_test(test)
+            return make_response(resp, resp.get('code', 200))
         return test.to_json()
-
-
-class SecurityTestsRerun(Resource):
-    def post(self, security_results_dast_id: int):
-        """
-        Post method for re-running test
-        """
-
-        test_result = security_results_or_404(security_results_dast_id)
-        test_config = test_result.test_config
-
-        test = SecurityTestsDAST.query.get(test_config['id'])
-        if not test:
-            test = SecurityTestsDAST(
-                project_id=test_config['project_id'],
-                project_name=test_config['project_name'],
-                test_uid=test_config['test_uid'],
-                name=test_config['name'],
-                description=test_config['description'],
-
-                urls_to_scan=test_config['urls_to_scan'],
-                urls_exclusions=test_config['urls_exclusions'],
-                scan_location=test_config['scan_location'],
-                test_parameters=test_config['test_parameters'],
-
-                integrations=test_config['integrations'],
-            )
-            test.insert()
-
-        return run_test(test)

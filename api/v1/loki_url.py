@@ -23,7 +23,7 @@ class API(Resource):
         if not key or not result_key:  # or key not in state:
             return {"message": ""}, 404
 
-        websocket_base_url = self.settings.settings['loki']['url']
+        websocket_base_url = self.module.settings.settings['loki']['url']
         websocket_base_url = websocket_base_url.replace("http://", "ws://")
         websocket_base_url = websocket_base_url.replace("api/v1/push", "api/v1/tail")
 
@@ -41,7 +41,7 @@ class API(Resource):
         return {"websocket_url": f"{websocket_base_url}?query={logs_query}&start={logs_start}&limit={logs_limit}"}
 
     def _get_minio(self):  # pylint: disable=R0201
-        return MinIOHelper.get_client(self.app_setting["storage"])
+        return MinIOHelper.get_client(self.app_setting["storage"])  # todo: what is app_setting??
 
     def _load_state_object(self, bucket, key):
         minio = self._get_minio()
@@ -53,7 +53,7 @@ class API(Resource):
 
     def _get_task_state(self):
         state = self._load_state_object(
-            self.settings["storage"]["buckets"]["state"],
-            self.settings["storage"]["objects"]["task_state"]
+            self.module.settings["storage"]["buckets"]["state"],
+            self.module.settings["storage"]["objects"]["task_state"]
         )
         return state if state is not None else dict()

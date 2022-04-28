@@ -24,8 +24,6 @@ class SecurityTestParams(BaseModel):
 
     @validator('test_parameters')
     def set_values_from_test_params(cls, value, values):
-        # from pylon.core.tools import log
-        # log.info('validator test_parameters called')
         for i in value:
             if i.name in cls._test_params_mapping.keys():
                 values[cls._test_params_mapping[i.name]] = i.default

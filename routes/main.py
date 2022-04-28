@@ -47,7 +47,7 @@ class Route:  # pylint: disable=E1101,R0903
 
 
     @web.route('/app')
-    @auth.decorators.check(["global_view"])
+    # @auth.decorators.check(["global_view"])
     def app(self):  # pylint: disable=R0201
         """ Index route """
         return self.descriptor.render_template("app.html")

@@ -50,7 +50,7 @@ class RPC:
 
     @web.rpc('security_run_scheduled_test', 'run_scheduled_test')
     @rpc_tools.wrap_exceptions(RuntimeError)
-    def run_scheduled_test(self, test_id: int, test_params: list):
+    def run_scheduled_test(self, test_id: int, test_params: list) -> dict:
         test = SecurityTestsDAST.query.filter(SecurityTestsDAST.id == test_id).one()
         test_params_schedule_pd = SecurityTestParams(test_parameters=test_params)
         test_params_existing_pd = SecurityTestParams.from_orm(test)
