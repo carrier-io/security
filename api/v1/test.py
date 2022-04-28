@@ -1,10 +1,9 @@
 import json
-from typing import Union, List
+from typing import Union
 
 from flask import request, make_response
-from flask_restful import abort, Resource
+from flask_restful import Resource
 from pylon.core.tools import log
-from sqlalchemy import and_
 
 from ...utils import run_test, parse_test_data
 from ...models.api_tests import SecurityTestsDAST

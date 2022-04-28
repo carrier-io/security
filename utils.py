@@ -1,9 +1,6 @@
 import json
 from queue import Empty
 from typing import Tuple, Union
-
-from flask import make_response
-from sqlalchemy import and_
 from pydantic import ValidationError
 
 from pylon.core.tools import log
@@ -11,9 +8,7 @@ from pylon.core.tools import log
 from .models.api_tests import SecurityTestsDAST
 from .models.security_results import SecurityResultsDAST
 
-# from ..tasks.api.utils import run_task
-from ..projects.models.statistics import Statistic
-from tools import rpc_tools
+from tools import rpc_tools, task_tools
 
 
 def run_test(test: SecurityTestsDAST, config_only=False) -> dict:
@@ -33,10 +28,10 @@ def run_test(test: SecurityTestsDAST, config_only=False) -> dict:
     if config_only:
         return event[0]
 
-    resp = run_task(test.project_id, event)
+    resp = task_tools.run_task(test.project_id, event)
     resp['redirect'] = f'/task/{resp["task_id"]}/results'  # todo: where this should lead to?
 
-    rpc_tools.RpcMixin().rpc.call.increment_statistics_dast(test.project_id)
+    rpc_tools.RpcMixin().rpc.call.increment_statistics(test.project_id, 'dast_scans')
 
     resp['result_id'] = security_results.id
     return resp
@@ -88,7 +83,7 @@ def parse_test_data(project_id: int, request_data: dict,
     test_description = request_data.pop('description', None)
 
     try:
-        test_data = parse_common_test_parameters(
+        test_data = rpc.call.security_test_create_common_parameters(
             project_id=project_id,
             name=test_name,
             description=test_description,

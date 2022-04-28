@@ -1,15 +1,8 @@
 from datetime import datetime
 
-from flask import request
+from flask import request, make_response
 from flask_restful import Resource
 from sqlalchemy import and_, or_, desc
-
-# from ...shared.utils.restApi import RestResource
-# from ...shared.utils.api_utils import build_req_parser
-
-# from ...projects.models.project import Project
-# from ...projects.models.statistics import Statistic
-# from ...projects.models.quota import ProjectQuota
 
 from ...models.security_reports import SecurityReport
 from ...models.security_results import SecurityResultsDAST
@@ -18,31 +11,6 @@ from ...models.security_results import SecurityResultsDAST
 class API(Resource):
     def __init__(self, module):
         self.module = module
-
-    # get_rules = (
-    #     dict(name="offset", type=int, default=0, location="args"),
-    #     dict(name="limit", type=int, default=0, location="args"),
-    #     dict(name="search", type=str, default="", location="args"),
-    #     dict(name="sort", type=str, default="", location="args"),
-    #     dict(name="order", type=str, default="", location="args"),
-    #     dict(name="type", type=str, default="sast", location="args"),
-    # )
-    # delete_rules = (
-    #     dict(name="id[]", type=int, action="append", location="args"),
-    # )
-    # post_rules = (
-    #     dict(name="project_name", type=str, location="json"),
-    #     dict(name="app_name", type=str, location="json"),
-    #     dict(name="scan_time", type=float, location="json"),
-    #     dict(name="dast_target", type=str, location="json"),
-    #     dict(name="sast_code", type=str, location="json"),
-    #     dict(name="scan_type", type=str, location="json"),
-    #     dict(name="findings", type=int, location="json"),
-    #     dict(name="false_positives", type=int, location="json"),
-    #     dict(name="excluded", type=int, location="json"),
-    #     dict(name="info_findings", type=int, location="json"),
-    #     dict(name="environment", type=str, location="json")
-    # )
 
     def get(self, project_id):
         reports = []
@@ -77,11 +45,12 @@ class API(Resource):
             each_json["scan_time"] = each_json["scan_time"].replace("T", " ").split(".")[0]
             each_json["scan_duration"] = float(each_json["scan_duration"])
             reports.append(each_json)
-        return {"total": total, "rows": reports}
+        return make_response({"total": total, "rows": reports}, 200)
 
     def delete(self, project_id: int):
         args = request.args
-        project = Project.get_or_404(project_id)
+        # project = Project.get_or_404(project_id)
+        project = self.module.context.rpc_manager.call.project_get_or_404(project_id)
         for each in SecurityReport.query.filter(
                 and_(SecurityReport.project_id == project.id, SecurityReport.report_id.in_(args["id[]"]))
         ).order_by(SecurityReport.id.asc()).all():
@@ -94,14 +63,21 @@ class API(Resource):
 
     def post(self, project_id: int):
         args = request.json
-        project = Project.get_or_404(project_id)
+        self.module.context.rpc_manager.call.project_get_or_404(project_id)
+
         # TODO move sast/dast quota checks to a new endpoint, which will be triggered before the scan
         if args["scan_type"].lower() == 'sast':
-            if not ProjectQuota.check_quota(project_id=project_id, quota='sast_scans'):
-                return {"Forbidden": "The number of sast scans allowed in the project has been exceeded"}
+            if not self.module.context.rpc_manager.call.project_check_quota(project_id, 'sast_scans'):
+                return make_response(
+                    {"Forbidden": "The number of sast scans allowed in the project has been exceeded"},
+                    400
+                )
         elif args["scan_type"].lower() == 'dast':
-            if not ProjectQuota.check_quota(project_id=project_id, quota='dast_scans'):
-                return {"Forbidden": "The number of dast scans allowed in the project has been exceeded"}
+            if not self.module.context.rpc_manager.call.project_check_quota(project_id, 'dast_scans'):
+                return make_response(
+                    {"Forbidden": "The number of dast scans allowed in the project has been exceeded"},
+                    400
+                )
 
         # monkey patch security results getter
         report = SecurityResultsDAST.query.filter(SecurityResultsDAST.project_id == project_id).order_by(
@@ -128,11 +104,9 @@ class API(Resource):
 
         report.commit()
 
-        statistic = Statistic.query.filter_by(project_id=project_id).first()
         if args["scan_type"].lower() == 'sast':
-            setattr(statistic, 'sast_scans', Statistic.sast_scans + 1)
+            self.module.context.rpc_manager.call.increment_statistics(project_id, 'sast_scans')
         elif args["scan_type"].lower() == 'dast':
-            setattr(statistic, 'dast_scans', Statistic.dast_scans + 1)
-        statistic.commit()
+            self.module.context.rpc_manager.call.increment_statistics(project_id, 'dast_scans')
 
-        return {"id": report.id}
+        return make_response({"id": report.id}, 200)

@@ -8,13 +8,9 @@ from sqlalchemy import and_
 
 from ...models.api_tests import SecurityTestsDAST
 from ...models.security_thresholds import SecurityThresholds
-
-# from ...shared.utils.rpc import RpcMixin
-# from ...shared.utils.api_utils import get
+from ...utils import parse_test_data, run_test
 
 from tools import api_tools
-
-from ...utils import parse_test_data, run_test
 
 
 class API(Resource):
@@ -29,7 +25,8 @@ class API(Resource):
             schedules = test.pop('schedules', [])
             if schedules:
                 try:
-                    test['scheduling'] = self.context.rpc_manager.timeout(2).scheduling_security_load_from_db_by_ids(schedules)
+                    test['scheduling'] = self.module.context.rpc_manager.timeout(
+                        2).scheduling_security_load_from_db_by_ids(schedules)
                 except Empty:
                     ...
             test['scanners'] = i.scanners
@@ -43,13 +40,13 @@ class API(Resource):
     def get_schedules_ids(filter_) -> set:
         r = set()
         for i in SecurityTestsDAST.query.with_entities(SecurityTestsDAST.schedules).filter(
-            filter_
+                filter_
         ).all():
             r.update(set(*i))
         return r
 
     def delete(self, project_id: int):
-        project = self.context.rpc_manager.call.project_get_or_404(project_id=project_id)
+        project = self.module.context.rpc_manager.call.project_get_or_404(project_id=project_id)
         try:
             delete_ids = list(map(int, request.args["id[]"].split(',')))
         except TypeError:
@@ -61,7 +58,7 @@ class API(Resource):
         )
 
         try:
-            self.context.rpc_manager.timeout(3).scheduling_delete_schedules(
+            self.module.context.rpc_manager.timeout(3).scheduling_delete_schedules(
                 self.get_schedules_ids(filter_)
             )
         except Empty:
@@ -83,12 +80,11 @@ class API(Resource):
         test_data, errors = parse_test_data(
             project_id=project_id,
             request_data=request.json,
-            rpc=self.context.rpc_manager,
+            rpc=self.module.context.rpc_manager,
         )
 
         if errors:
             return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
-
 
         # log.warning('TEST DATA')
         # log.warning(test_data)

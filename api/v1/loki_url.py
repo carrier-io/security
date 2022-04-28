@@ -1,18 +1,14 @@
-import os
 import json
 import gzip
 
 import flask
+from flask import make_response
 from flask_restful import Resource
 from pylon.core.tools import log
 from pylon.core.seeds.minio import MinIOHelper
 
-# from ...shared.utils.restApi import RestResource
-# from ...shared.utils.api_utils import build_req_parser
-
 
 class API(Resource):
-
     def __init__(self, module):
         self.module = module
 
@@ -21,7 +17,7 @@ class API(Resource):
         key = flask.request.args.get("task_id", None)
         result_key = flask.request.args.get("result_test_id", None)
         if not key or not result_key:  # or key not in state:
-            return {"message": ""}, 404
+            return make_response({"message": ""}, 404)
 
         websocket_base_url = self.module.settings.settings['loki']['url']
         websocket_base_url = websocket_base_url.replace("http://", "ws://")
@@ -38,7 +34,10 @@ class API(Resource):
         logs_start = 0
         logs_limit = 10000000000
 
-        return {"websocket_url": f"{websocket_base_url}?query={logs_query}&start={logs_start}&limit={logs_limit}"}
+        return make_response(
+            {"websocket_url": f"{websocket_base_url}?query={logs_query}&start={logs_start}&limit={logs_limit}"},
+            200
+        )
 
     def _get_minio(self):  # pylint: disable=R0201
         return MinIOHelper.get_client(self.app_setting["storage"])  # todo: what is app_setting??

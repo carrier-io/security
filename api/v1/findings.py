@@ -1,11 +1,8 @@
 import hashlib
 
-from flask import request, abort
+from flask import request, abort, make_response
 from flask_restful import Resource
 from sqlalchemy import and_, func, or_, asc
-
-# from ...shared.utils.restApi import RestResource
-# from ...shared.utils.api_utils import build_req_parser
 
 from ...models.security_reports import SecurityReport
 from ...models.security_details import SecurityDetails
@@ -15,32 +12,6 @@ from ...models.security_results import SecurityResultsDAST
 class API(Resource):
     def __init__(self, module):
         self.module = module
-
-    # _get_rules = (
-    #     # dict(name="type", type=str, location="args"),
-    #     dict(name="status", type=str, location="args"),
-    # )
-
-    # _get_rules = (
-    #     dict(name="offset", type=int, default=0, location="args"),
-    #     dict(name="limit", type=int, default=0, location="args"),
-    #     dict(name="search", type=str, default="", location="args"),
-    #     dict(name="sort", type=str, default="", location="args"),
-    #     dict(name="order", type=str, default="", location="args"),
-    #     dict(name="name", type=str, location="args"),
-    #     dict(name="filter", type=str, location="args")
-    # )
-
-    # _post_rules = (
-    #     dict(name="status", type=str, location="form"),
-    # )
-    #
-    # put_rules = (
-    #     dict(name="severity", type=str, location="json"),
-    #     dict(name="status", type=str, location="json"),
-    #     dict(name="issues_id", type=list, default=[], location="json"),
-    #     dict(name="issue_hashes", type=list, default=[], location="json")
-    # )
 
     def get(self, project_id: int, test_id: int):
 
@@ -59,7 +30,7 @@ class API(Resource):
             _res = issue.to_json()
             _res["details"] = SecurityDetails.query.filter_by(id=_res["details"]).first().details
             results.append(_res)
-        return results
+        return make_response(results, 200)
 
     def put(self, project_id: int, test_id: int):
         args = request.json
@@ -106,7 +77,7 @@ class API(Resource):
             results.update_severity_counts()
 
         results.update_findings_counts()
-        return accept_message
+        return make_response(accept_message, 204)
 
     def post(self, project_id: int):
         finding_db = None
@@ -162,4 +133,5 @@ class API(Resource):
 
         if finding_db:
             finding_db.commit()
-
+            return make_response('ok', 204)
+        return make_response('No findings passed', 400)

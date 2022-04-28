@@ -10,7 +10,6 @@ from flask import request, make_response
 
 
 class API(Resource):
-
     def __init__(self, module):
         self.module = module
 
@@ -43,4 +42,4 @@ class API(Resource):
             except AttributeError:
                 thresholds = {}
             return test.configure_execution_json(args.get("type"), thresholds=thresholds)
-        return make_response(f'Unknown test type {test_type}', 404)
+        return make_response(f'Unknown test type {test_type}', 400)

@@ -3,7 +3,7 @@ from io import BytesIO
 from urllib.parse import urlunparse, urlparse
 
 import requests
-from flask import current_app, request
+from flask import current_app, request, make_response
 from flask_restful import Resource
 from pylon.core.tools import log
 from sqlalchemy import and_, func
@@ -42,11 +42,11 @@ class API(Resource):
 
             write_test_run_logs_to_minio_bucket(test)
 
-        return {"message": f"Status for test_id={test_id} of project_id: {project_id} updated"}, 200
+        return make_response({"message": f"Status for test_id={test_id} of project_id: {project_id} updated"}, 200)
 
 
 def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='log.txt'):
-    loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))
+    loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))  # todo: check if self.module.context.config returns the same
     if loki_settings_url:
         #
         task_key = test.test_id
