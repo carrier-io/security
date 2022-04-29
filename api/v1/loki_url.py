@@ -9,6 +9,10 @@ from pylon.core.seeds.minio import MinIOHelper
 
 
 class API(Resource):
+    url_params = [
+        '<int:project_id>',
+    ]
+
     def __init__(self, module):
         self.module = module
 
@@ -39,20 +43,20 @@ class API(Resource):
             200
         )
 
-    def _get_minio(self):  # pylint: disable=R0201
-        return MinIOHelper.get_client(self.app_setting["storage"])  # todo: what is app_setting??
-
-    def _load_state_object(self, bucket, key):
-        minio = self._get_minio()
-        try:
-            return json.loads(gzip.decompress(minio.get_object(bucket, key).read()))
-        except:  # pylint: disable=W0702
-            log.exception("Failed to load state object")
-            return None
-
-    def _get_task_state(self):
-        state = self._load_state_object(
-            self.module.settings["storage"]["buckets"]["state"],
-            self.module.settings["storage"]["objects"]["task_state"]
-        )
-        return state if state is not None else dict()
+    # def _get_minio(self):  # pylint: disable=R0201
+    #     return MinIOHelper.get_client(self.app_setting["storage"])  # todo: what is app_setting??
+    #
+    # def _load_state_object(self, bucket, key):
+    #     minio = self._get_minio()
+    #     try:
+    #         return json.loads(gzip.decompress(minio.get_object(bucket, key).read()))
+    #     except:  # pylint: disable=W0702
+    #         log.exception("Failed to load state object")
+    #         return None
+    #
+    # def _get_task_state(self):
+    #     state = self._load_state_object(
+    #         self.module.settings["storage"]["buckets"]["state"],
+    #         self.module.settings["storage"]["objects"]["task_state"]
+    #     )
+    #     return state if state is not None else dict()

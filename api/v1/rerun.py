@@ -6,6 +6,10 @@ from ...utils import run_test
 
 
 class API(Resource):
+    url_params = [
+        '<int:security_results_dast_id>',
+    ]
+
     def __init__(self, module):
         self.module = module
 

@@ -9,10 +9,14 @@ from ...models.security_results import SecurityResultsDAST
 
 
 class API(Resource):
+    url_params = [
+        '<int:project_id>',
+    ]
+
     def __init__(self, module):
         self.module = module
 
-    def get(self, project_id):
+    def get(self, project_id: int):
         reports = []
         args = request.args
         search_ = args.get("search")

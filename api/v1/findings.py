@@ -10,6 +10,11 @@ from ...models.security_results import SecurityResultsDAST
 
 
 class API(Resource):
+    url_params = [
+        '<int:project_id>',
+        '<int:project_id>/<int:test_id>',
+    ]
+
     def __init__(self, module):
         self.module = module
 
@@ -79,7 +84,7 @@ class API(Resource):
         results.update_findings_counts()
         return make_response(accept_message, 204)
 
-    def post(self, project_id: int):
+    def post(self, project_id: int, *args):
         finding_db = None
         for finding in request.json:
             md5 = hashlib.md5(finding["details"].encode("utf-8")).hexdigest()

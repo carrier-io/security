@@ -10,6 +10,11 @@ from ...models.api_tests import SecurityTestsDAST
 
 
 class API(Resource):
+    url_params = [
+        '<int:project_id>/<int:test_id>',
+        '<int:project_id>/<string:test_id>',
+    ]
+
     def __init__(self, module):
         self.module = module
 

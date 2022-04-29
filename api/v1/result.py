@@ -5,6 +5,10 @@ from ...models.security_results import SecurityResultsDAST
 
 
 class API(Resource):
+    url_params = [
+        '<int:project_id>/<int:result_id>',
+    ]
+
     def __init__(self, module):
         self.module = module
 

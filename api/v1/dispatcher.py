@@ -10,6 +10,10 @@ from flask import request, make_response
 
 
 class API(Resource):
+    url_params = [
+        '<int:project_id>/<string:seed>',
+    ]
+
     def __init__(self, module):
         self.module = module
 

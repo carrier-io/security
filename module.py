@@ -124,6 +124,11 @@ class Module(module.ModuleModel):
             prefix="security_app_slot_",
             weight=5,
         )
+
+        # security_app_slot_styles
+        # security_app_slot_scripts
+        # security_app_slot_content
+
         # theme.register_page(
         #     "demo", "subdemo", "view",
         #     title="Demo View",

@@ -14,6 +14,10 @@ from tools import api_tools
 
 
 class API(Resource):
+    url_params = [
+        '<int:project_id>',
+    ]
+
     def __init__(self, module):
         self.module = module
 

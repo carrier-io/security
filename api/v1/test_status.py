@@ -13,6 +13,9 @@ from ...models.security_results import SecurityResultsDAST
 
 
 class API(Resource):
+    url_params = [
+        '<int:project_id>/<int:test_id>',
+    ]
     def __init__(self, module):
         self.module = module
 
@@ -46,6 +49,7 @@ class API(Resource):
 
 
 def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='log.txt'):
+
     loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))  # todo: check if self.module.context.config returns the same
     if loki_settings_url:
         #
