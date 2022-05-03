@@ -4,17 +4,18 @@ from datetime import datetime as dt, timedelta
 from sqlalchemy import String, Column, Integer, JSON, DateTime, ARRAY, func
 
 from .security_reports import SecurityReport
-from ...shared.db_manager import Base
-from ...shared.models.abstract_base import AbstractBaseMixin
-from ...shared.utils.api_utils import format_date
-from ...shared.utils.rpc import RpcMixin
-from ...shared.connectors.minio import MinioClient
+# from ...shared.db_manager import Base
+# from ...shared.models.abstract_base import AbstractBaseMixin
+# from ...shared.utils.api_utils import format_date
+# from ...shared.utils.rpc import RpcMixin
+# from ...shared.connectors.minio import MinioClient
+
+from tools import db_tools, db, rpc_tools, MinioClient, api_tools
 
 from .api_tests import SecurityTestsDAST
 
 
-class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
-
+class SecurityResultsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin):
     __tablename__ = "security_results_dast"
 
     # TODO: excluded = ignored
@@ -62,7 +63,6 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
     )
     test_config = Column(JSON, nullable=False, unique=False)
 
-
     # TODO: write this method
     def set_test_status(self, ts):
         self.test_status = ts
@@ -94,10 +94,10 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
 
         test_param["name"] = test_param.pop("test_name")
         if test_param["duration"]:
-            test_param["ended_date"] = format_date(test_param["start_date"] + timedelta(seconds=float(test_param["duration"])))
-        test_param["start_date"] = format_date(test_param["start_date"])
+            test_param["ended_date"] = api_tools.format_date(
+                test_param["start_date"] + timedelta(seconds=float(test_param["duration"])))
+        test_param["start_date"] = api_tools.format_date(test_param["start_date"])
         return test_param
-
 
     def update_severity_counts(self):
         counts = SecurityReport.query.with_entities(
@@ -138,4 +138,3 @@ class SecurityResultsDAST(AbstractBaseMixin, Base, RpcMixin):
 
 for i in [*SecurityReport.STATUS_CHOICES.keys(), *SecurityReport.SEVERITY_CHOICES.keys()]:
     setattr(SecurityResultsDAST, i, Column(Integer, unique=False, default=0))
-

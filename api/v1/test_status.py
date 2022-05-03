@@ -3,29 +3,24 @@ from io import BytesIO
 from urllib.parse import urlunparse, urlparse
 
 import requests
-from flask import current_app
+from flask import current_app, request, make_response
+from flask_restful import Resource
+from pylon.core.tools import log
 from sqlalchemy import and_, func
 
-from ...shared.utils.restApi import RestResource
-from ...shared.utils.api_utils import build_req_parser
-from ..models.security_results import SecurityResultsDAST
-from ..models.security_reports import SecurityReport
+from ...models.security_results import SecurityResultsDAST
+# from ...models.security_reports import SecurityReport
 
 
-class TestStatusUpdater(RestResource):
-    _put_rules = (
-        dict(name="test_status", type=dict, location="json"),
-    )
-
-    def __init__(self):
-        super().__init__()
-        self.__init_req_parsers()
-
-    def __init_req_parsers(self):
-        self._parser_put = build_req_parser(rules=self._put_rules)
+class API(Resource):
+    url_params = [
+        '<int:project_id>/<int:test_id>',
+    ]
+    def __init__(self, module):
+        self.module = module
 
     def put(self, project_id: int, test_id: int):
-        args = self._parser_put.parse_args(strict=False)
+        args = request.json
         test_status = args.get("test_status")
 
         if not test_status:
@@ -50,11 +45,12 @@ class TestStatusUpdater(RestResource):
 
             write_test_run_logs_to_minio_bucket(test)
 
-        return {"message": f"Status for test_id={test_id} of project_id: {project_id} updated"}, 200
+        return make_response({"message": f"Status for test_id={test_id} of project_id: {project_id} updated"}, 200)
 
 
 def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='log.txt'):
-    loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))
+
+    loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))  # todo: check if self.module.context.config returns the same
     if loki_settings_url:
         #
         task_key = test.test_id
@@ -84,14 +80,13 @@ def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='lo
                 for ii in i['values']:
                     ii.append(i['stream']['level'])
                     unpacked_values.append(ii)
-                # unpacked_values.extend()
             for unix_ns, log_line, level in sorted(unpacked_values, key=lambda x: int(x[0])):
                 timestamp = datetime.fromtimestamp(int(unix_ns) / 1e9).strftime("%Y-%m-%d %H:%M:%S")
                 file_output.write(
-                    f'{timestamp}\t{level}\t{log_line}\n'.encode(
-                        enc
-                    )
+                    f'{timestamp}\t{level}\t{log_line}\n'.encode(enc)
                 )
             minio_client = test.get_minio_client()
             file_output.seek(0)
             minio_client.upload_file(test.bucket_name, file_output, file_name)
+        else:
+            log.warning('Request to loki failed with status %s', response.status_code)

@@ -6,25 +6,31 @@ from pylon.core.tools import log
 from flask import request, make_response
 from sqlalchemy import and_
 
-from ..rpc import security_results_or_404
-from ..utils import run_test, parse_test_data
-from ..models.api_tests import SecurityTestsDAST
-from ..models.security_thresholds import SecurityThresholds
+from ...models.api_tests import SecurityTestsDAST
+from ...models.security_thresholds import SecurityThresholds
+from ...utils import parse_test_data, run_test
 
-from ...shared.utils.rpc import RpcMixin
-from ...shared.utils.api_utils import get
+from tools import api_tools
 
 
-class SecurityTestsApi(Resource, RpcMixin):
+class API(Resource):
+    url_params = [
+        '<int:project_id>',
+    ]
+
+    def __init__(self, module):
+        self.module = module
+
     def get(self, project_id: int):
-        total, res = get(project_id, request.args, SecurityTestsDAST)
+        total, res = api_tools.get(project_id, request.args, SecurityTestsDAST)
         rows = []
         for i in res:
             test = i.to_json()
             schedules = test.pop('schedules', [])
             if schedules:
                 try:
-                    test['scheduling'] = self.rpc.timeout(2).scheduling_security_load_from_db_by_ids(schedules)
+                    test['scheduling'] = self.module.context.rpc_manager.timeout(
+                        2).scheduling_security_load_from_db_by_ids(schedules)
                 except Empty:
                     ...
             test['scanners'] = i.scanners
@@ -38,13 +44,13 @@ class SecurityTestsApi(Resource, RpcMixin):
     def get_schedules_ids(filter_) -> set:
         r = set()
         for i in SecurityTestsDAST.query.with_entities(SecurityTestsDAST.schedules).filter(
-            filter_
+                filter_
         ).all():
             r.update(set(*i))
         return r
 
     def delete(self, project_id: int):
-        project = self.rpc.call.project_get_or_404(project_id=project_id)
+        project = self.module.context.rpc_manager.call.project_get_or_404(project_id=project_id)
         try:
             delete_ids = list(map(int, request.args["id[]"].split(',')))
         except TypeError:
@@ -55,9 +61,12 @@ class SecurityTestsApi(Resource, RpcMixin):
             SecurityTestsDAST.id.in_(delete_ids)
         )
 
-        self.rpc.timeout(3).scheduling_delete_schedules(
-            self.get_schedules_ids(filter_)
-        )
+        try:
+            self.module.context.rpc_manager.timeout(3).scheduling_delete_schedules(
+                self.get_schedules_ids(filter_)
+            )
+        except Empty:
+            ...
 
         SecurityTestsDAST.query.filter(
             filter_
@@ -75,12 +84,11 @@ class SecurityTestsApi(Resource, RpcMixin):
         test_data, errors = parse_test_data(
             project_id=project_id,
             request_data=request.json,
-            rpc=self.rpc,
+            rpc=self.module.context.rpc_manager,
         )
 
         if errors:
             return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
-
 
         # log.warning('TEST DATA')
         # log.warning(test_data)
@@ -117,35 +125,6 @@ class SecurityTestsApi(Resource, RpcMixin):
         threshold.insert()
 
         if run_test_:
-            return run_test(test)
+            resp = run_test(test)
+            return make_response(resp, resp.get('code', 200))
         return test.to_json()
-
-
-class SecurityTestsRerun(Resource):
-    def post(self, security_results_dast_id: int):
-        """
-        Post method for re-running test
-        """
-
-        test_result = security_results_or_404(security_results_dast_id)
-        test_config = test_result.test_config
-
-        test = SecurityTestsDAST.query.get(test_config['id'])
-        if not test:
-            test = SecurityTestsDAST(
-                project_id=test_config['project_id'],
-                project_name=test_config['project_name'],
-                test_uid=test_config['test_uid'],
-                name=test_config['name'],
-                description=test_config['description'],
-
-                urls_to_scan=test_config['urls_to_scan'],
-                urls_exclusions=test_config['urls_exclusions'],
-                scan_location=test_config['scan_location'],
-                test_parameters=test_config['test_parameters'],
-
-                integrations=test_config['integrations'],
-            )
-            test.insert()
-
-        return run_test(test)
