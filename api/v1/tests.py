@@ -26,9 +26,11 @@ class API(Resource):
         rows = []
         for i in res:
             test = i.to_json()
+
             schedules = test.pop('schedules', [])
             if schedules:
                 try:
+                    log.info('test_5 %s', test)
                     test['scheduling'] = self.module.context.rpc_manager.timeout(
                         2).scheduling_security_load_from_db_by_ids(schedules)
                 except Empty:
@@ -86,6 +88,8 @@ class API(Resource):
             request_data=request.json,
             rpc=self.module.context.rpc_manager,
         )
+
+        log.warning('POST ERRORS %s', errors)
 
         if errors:
             return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)

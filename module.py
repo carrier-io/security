@@ -121,13 +121,13 @@ class Module(module.ModuleModel):
             "app", "App",
             title="Security Application",
             kind="slot",
-            prefix="security_app_slot_",
+            prefix="security_app_",
             weight=5,
         )
 
-        # security_app_slot_styles
-        # security_app_slot_scripts
-        # security_app_slot_content
+        # security_app_styles
+        # security_app_scripts
+        # security_app_content
 
         # theme.register_page(
         #     "demo", "subdemo", "view",
@@ -135,6 +135,8 @@ class Module(module.ModuleModel):
         #     kind="slot",
         #     prefix="demo_slot_view_",
         # )
+
+        self.descriptor.init_slots()
 
     def deinit(self):  # pylint: disable=R0201
         """ De-init module """

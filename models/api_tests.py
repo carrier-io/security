@@ -81,8 +81,11 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
         self.commit()
 
     @property
-    def scanners(self):
-        return list(self.integrations.get('scanners', {}).keys())
+    def scanners(self) -> list:
+        try:
+            return list(self.integrations.get('scanners', {}).keys())
+        except AttributeError:
+            return []
 
     @staticmethod
     def get_api_filter(project_id: int, test_id: Union[int, str]):

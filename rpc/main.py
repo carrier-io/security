@@ -7,7 +7,9 @@ from ..models.security_results import SecurityResultsDAST
 from ..utils import run_test
 
 from tools import rpc_tools
+
 from pylon.core.tools import web
+from pydantic import ValidationError
 
 
 class RPC:
@@ -38,6 +40,7 @@ class RPC:
 
     @web.rpc('security_test_create_common_parameters', 'parse_common_test_parameters')
     @rpc_tools.wrap_exceptions(RuntimeError)
+    # @rpc_tools.wrap_exceptions(ValidationError)
     def parse_common_test_parameters(self, project_id: int, name: str, description: str, **kwargs) -> dict:
         project = self.context.rpc_manager.call.project_get_or_404(project_id=project_id)
         pd_object = SecurityTestCommon(

@@ -6,7 +6,7 @@
                     <div class="col">
                         <h2 id="modal_title">Add Application Test</h2>
                     </div>
-                    <div class="col-xs">
+                    <div class="col-xs d-flex">
                         <button type="button" class="btn btn-sm btn-projects" data-dismiss="modal"><i
                                 class="fas fa-file-alt"></i> Use template
                         </button>
@@ -54,7 +54,7 @@
                     </div>
                 </div>
 
-                {{ template_slot("params_table", payload={
+                {{ template_slot("params_table_content", payload={
                     "caption": "Test Parameters",
                     "default_params": [
                         {"name": "URL to scan", "default": "", "type": "URLs", "description": "Data"},
@@ -66,9 +66,9 @@
                     "hidden_columns": []
                 }) | safe }}
 
-                {{ template_slot("integrations_security_create", payload=config) | safe }}
-
-                {{ template_slot("security_scheduling_test_create", payload=config) | safe }}
+{#                {{ template_slot("integrations_security_create", payload=config) | safe }}#}
+{##}
+{#                {{ template_slot("security_scheduling_test_create", payload=config) | safe }}#}
 
             </div>
         </div>
