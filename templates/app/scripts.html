@@ -1,0 +1,4 @@
+<script src="{{ url_for('theme.static', filename='js/tags.js') }}"></script>
+<script src="{{ url_for('security.static', filename='js/app/modal.js') }}"></script>
+<script src="{{ url_for('security.static', filename='js/app/main.js') }}"></script>
+{{ template_slot('params_table_scripts') | safe }}
