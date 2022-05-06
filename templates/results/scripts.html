@@ -1,0 +1,18 @@
+<script>
+    const setIntegrations = values => {
+        Object.keys(values).forEach(section => {
+            Object.keys(values[section]).forEach(integrationItem => {
+                const dataCallbackName = `${section}_${integrationItem}`
+                window[dataCallbackName]?.set_data(values[section][integrationItem])
+            })
+        })
+    }
+    $(() => {
+        setIntegrations({{ test_data['test_config']['integrations'] or [] | tojson }})
+    })
+</script>
+<script src="{{ url_for('security.static', filename='js/results/summary.js') }}"></script>
+
+<script src="{{ url_for('security.static', filename='js/results/in_progress.js') }}"></script>
+<script src="{{ url_for('security.static', filename='js/results/logs_updater.js') }}"></script>
+{{ template_slot('params_table_scripts') | safe }}

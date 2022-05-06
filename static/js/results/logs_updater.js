@@ -96,6 +96,7 @@ const LogsApp = {
     }
 }
 
-Vue.createApp({
-    components: LogsApp
-}).mount('#logs')
+// Vue.createApp({
+//     components: LogsApp
+// }).mount('#logs')
+vueApp.component('logsapp', LogsApp)
