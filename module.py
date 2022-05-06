@@ -112,29 +112,31 @@ class Module(module.ModuleModel):
         self.descriptor.init_blueprint()
 
         theme.register_section(
-            "security", "Security",
+            "security",
+            "Security",
             kind="holder",
             location="left",
         )
         theme.register_subsection(
-            "security",
-            "app", "App",
+            "security", "app",
+            "App",
             title="Security Application",
             kind="slot",
             prefix="security_app_",
             weight=5,
         )
 
+        theme.register_page(
+            "security", "app",
+            "results",
+            title="Test Results",
+            kind="slot",
+            prefix="security_app_results_",
+        )
+
         # security_app_styles
         # security_app_scripts
         # security_app_content
-
-        # theme.register_page(
-        #     "demo", "subdemo", "view",
-        #     title="Demo View",
-        #     kind="slot",
-        #     prefix="demo_slot_view_",
-        # )
 
         self.descriptor.init_slots()
 

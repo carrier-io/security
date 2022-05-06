@@ -33,14 +33,15 @@ class RPC:
         return dict(zip([i['name'] for i in q.column_descriptions], q.first()))
 
     @web.rpc('security_test_create_test_parameters', 'parse_test_parameters')
-    @rpc_tools.wrap_exceptions(RuntimeError)
+    # @rpc_tools.wrap_exceptions(RuntimeError)
+    @rpc_tools.wrap_exceptions(ValidationError)
     def parse_test_parameters(self, data: list, **kwargs) -> dict:
         pd_object = SecurityTestParamsCommon(test_parameters=data)
         return pd_object.dict(**kwargs)
 
     @web.rpc('security_test_create_common_parameters', 'parse_common_test_parameters')
-    @rpc_tools.wrap_exceptions(RuntimeError)
-    # @rpc_tools.wrap_exceptions(ValidationError)
+    # @rpc_tools.wrap_exceptions(RuntimeError)
+    @rpc_tools.wrap_exceptions(ValidationError)
     def parse_common_test_parameters(self, project_id: int, name: str, description: str, **kwargs) -> dict:
         project = self.context.rpc_manager.call.project_get_or_404(project_id=project_id)
         pd_object = SecurityTestCommon(
