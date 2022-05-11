@@ -5,7 +5,7 @@ from sqlalchemy import and_
 # from ...shared.utils.api_utils import build_req_parser
 
 from ...models.api_tests import SecurityTestsDAST
-from ...models.security_thresholds import SecurityThresholds
+from ...models.thresholds import SecurityThresholds
 from flask import request, make_response
 
 

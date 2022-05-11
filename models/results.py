@@ -3,7 +3,7 @@ from datetime import datetime as dt, timedelta
 
 from sqlalchemy import String, Column, Integer, JSON, DateTime, ARRAY, func
 
-from .security_reports import SecurityReport
+from .reports import SecurityReport
 # from ...shared.db_manager import Base
 # from ...shared.models.abstract_base import AbstractBaseMixin
 # from ...shared.utils.api_utils import format_date

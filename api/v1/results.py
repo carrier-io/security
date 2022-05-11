@@ -3,7 +3,7 @@ from flask_restful import Resource
 
 from tools import api_tools
 
-from ...models.security_results import SecurityResultsDAST
+from ...models.results import SecurityResultsDAST
 
 
 class API(Resource):

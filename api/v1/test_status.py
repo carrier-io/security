@@ -8,7 +8,7 @@ from flask_restful import Resource
 from pylon.core.tools import log
 from sqlalchemy import and_, func
 
-from ...models.security_results import SecurityResultsDAST
+from ...models.results import SecurityResultsDAST
 # from ...models.security_reports import SecurityReport
 
 

@@ -7,7 +7,7 @@ from flask import request, make_response
 from sqlalchemy import and_
 
 from ...models.api_tests import SecurityTestsDAST
-from ...models.security_thresholds import SecurityThresholds
+from ...models.thresholds import SecurityThresholds
 from ...utils import parse_test_data, run_test
 
 from tools import api_tools

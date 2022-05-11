@@ -4,9 +4,9 @@ from flask import request, abort, make_response
 from flask_restful import Resource
 from sqlalchemy import and_, func, or_, asc
 
-from ...models.security_reports import SecurityReport
-from ...models.security_details import SecurityDetails
-from ...models.security_results import SecurityResultsDAST
+from ...models.reports import SecurityReport
+from ...models.details import SecurityDetails
+from ...models.results import SecurityResultsDAST
 
 
 class API(Resource):
