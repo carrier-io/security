@@ -30,19 +30,16 @@ class Module(module.ModuleModel):
     def __init__(self, context, descriptor):
         self.context = context
         self.descriptor = descriptor
-        #
-        # self.settings = self.descriptor.config
 
     def init(self):
         """ Init module """
-        log.info(f'Initializing module {self.descriptor.name}')
+        log.info('Initializing module')
         init_db()
 
         self.descriptor.init_api()
-
         self.descriptor.init_rpcs()
-
         self.descriptor.init_blueprint()
+        self.descriptor.init_slots()
 
         theme.register_section(
             "security",
@@ -67,12 +64,6 @@ class Module(module.ModuleModel):
             prefix="security_app_results_",
         )
 
-        # security_app_styles
-        # security_app_scripts
-        # security_app_content
-
-        self.descriptor.init_slots()
-
     def deinit(self):  # pylint: disable=R0201
         """ De-init module """
-        log.info(f'De-initializing module {self.descriptor.name}')
+        log.info('De-initializing module')

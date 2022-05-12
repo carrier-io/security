@@ -1,6 +1,6 @@
 {
   "name": "Carrier Security RestAPI Plugin",
-  "version": "0.1",
+  "version": "0.2",
   "depends_on": ["shared", "projects", "tasks", "theme"],
-  "init_after": ["projects"]
+  "init_after": []
 }
