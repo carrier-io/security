@@ -4,8 +4,8 @@ from flask import request, make_response
 from flask_restful import Resource
 from sqlalchemy import and_, or_, desc
 
-from ...models.security_reports import SecurityReport
-from ...models.security_results import SecurityResultsDAST
+from ...models.reports import SecurityReport
+from ...models.results import SecurityResultsDAST
 
 
 class API(Resource):

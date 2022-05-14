@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from pylon.core.tools import log
 
 from .models.api_tests import SecurityTestsDAST
-from .models.security_results import SecurityResultsDAST
+from .models.results import SecurityResultsDAST
 
 from tools import rpc_tools, task_tools
 

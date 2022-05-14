@@ -1,7 +1,6 @@
-from flask import make_response
 from flask_restful import Resource
 
-from ...models.security_results import SecurityResultsDAST
+from ...models.results import SecurityResultsDAST
 
 
 class API(Resource):
@@ -17,4 +16,4 @@ class API(Resource):
             SecurityResultsDAST.project_id == project_id,
             SecurityResultsDAST.id == result_id,
         ).one()
-        return make_response(obj.to_json(), 200)
+        return obj.to_json(), 200

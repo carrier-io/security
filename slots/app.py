@@ -27,7 +27,7 @@ class Slot:  # pylint: disable=E1101,R0903
         access_denied_reply=theme.access_denied_part
     )
     def content(self, context, slot, payload):
-        log.info('app slot is here %s %s', slot, payload)
+        log.info('slot: [%s] || payload: [%s]', slot, payload)
         with context.app.app_context():
             return self.descriptor.render_template(
                 'app/content.html',
@@ -35,7 +35,7 @@ class Slot:  # pylint: disable=E1101,R0903
 
     @web.slot('security_app_scripts')
     def scripts(self, context, slot, payload):
-        log.info('app slot is here %s %s', slot, payload)
+        log.info('slot: [%s] || payload: [%s]', slot, payload)
         with context.app.app_context():
             return self.descriptor.render_template(
                 'app/scripts.html',
@@ -43,7 +43,7 @@ class Slot:  # pylint: disable=E1101,R0903
 
     @web.slot('security_app_styles')
     def styles(self, context, slot, payload):
-        log.info('app slot is here %s %s', slot, payload)
+        log.info('slot: [%s] || payload: [%s]', slot, payload)
         with context.app.app_context():
             return self.descriptor.render_template(
                 'app/styles.html',

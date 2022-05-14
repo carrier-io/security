@@ -2,8 +2,8 @@ from sqlalchemy.sql import func, LABEL_STYLE_TABLENAME_PLUS_COL
 
 from ..models.api_tests import SecurityTestsDAST
 from ..models.pd.security_test import SecurityTestParamsCommon, SecurityTestCommon, SecurityTestParams
-from ..models.security_reports import SecurityReport
-from ..models.security_results import SecurityResultsDAST
+from ..models.reports import SecurityReport
+from ..models.results import SecurityResultsDAST
 from ..utils import run_test
 
 from tools import rpc_tools
