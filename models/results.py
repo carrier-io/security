@@ -12,7 +12,7 @@ from .reports import SecurityReport
 
 from tools import db_tools, db, rpc_tools, MinioClient, api_tools
 
-from .api_tests import SecurityTestsDAST
+from .tests import SecurityTestsDAST
 
 
 class SecurityResultsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin):

@@ -2,7 +2,7 @@ from tools import db
 
 
 def init_db():
-    from .models.api_tests import SecurityTestsDAST
+    from .models.tests import SecurityTestsDAST
     from .models.results import SecurityResultsDAST
     from .models.thresholds import SecurityThresholds
 

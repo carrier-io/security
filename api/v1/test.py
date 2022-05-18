@@ -6,7 +6,7 @@ from flask_restful import Resource
 from pylon.core.tools import log
 
 from ...utils import run_test, parse_test_data
-from ...models.api_tests import SecurityTestsDAST
+from ...models.tests import SecurityTestsDAST
 
 
 class API(Resource):

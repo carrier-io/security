@@ -6,7 +6,7 @@ from pylon.core.tools import log
 from flask import request, make_response
 from sqlalchemy import and_
 
-from ...models.api_tests import SecurityTestsDAST
+from ...models.tests import SecurityTestsDAST
 from ...models.thresholds import SecurityThresholds
 from ...utils import parse_test_data, run_test
 

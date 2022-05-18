@@ -1,7 +1,7 @@
 from flask import make_response
 from flask_restful import Resource
 
-from ...models.api_tests import SecurityTestsDAST
+from ...models.tests import SecurityTestsDAST
 from ...utils import run_test
 
 
