@@ -28,3 +28,10 @@
 .fa-secondary {
 	color: var(--basic)
 }
+
+.col-6:first-child {
+	padding-left: 1px;
+}
+.col-6:last-child {
+	padding-right: 1px;
+}
