@@ -43,7 +43,7 @@ class SecurityTestParamsBase(BaseModel):
         )
         return instance
 
-    def update(self, other: ForwardRef('SecurityTestParams')):
+    def update(self, other: ForwardRef('SecurityTestParamsBase')):
         test_params_names = set(map(lambda tp: tp.name, other.test_parameters))
         modified_params = other.test_parameters
         for tp in self.test_parameters:
