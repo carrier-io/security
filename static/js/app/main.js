@@ -86,7 +86,7 @@ var apiActions = {
         }).then(response => response.ok && apiActions.afterSave())
     },
     delete: ids => {
-        const url = `${apiActions.base_url('tests')}` + $.param({"id[]": ids})
+        const url = `${apiActions.base_url('tests')}?` + $.param({"id[]": ids})
         console.log('Delete test with id', ids, url);
         fetch(url, {
             method: 'DELETE'

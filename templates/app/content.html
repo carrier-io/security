@@ -1,155 +1,572 @@
-<div class="d-flex">
-    <div class="card card-x">
+<div class="p-3">
+    <div class="flex-container">
+        <div class="flex-item-2">
+            <Table-Card
+                    @register="register"
+                    instance_name="table_tests"
 
-        <div class="card-header">
-            <div class="row">
-                <div class="col-5">
-                    <h3>Application Tests</h3>
-                </div>
-                <div class="col-7">
+                    header='Application Tests'
+                    :table_attributes="{
+                        'data-url': '/api/v1/security/tests/{{ tools.session_project.get() }}',
+                        'data-page-size': 5,
+                    }"
+            >
+                <template #actions>
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-32 btn-secondary" id="create_test" data-toggle="modal" data-target="#createApplicationTest"><i class="fas fa-plus"></i></button>
-{#                        <button type="button" class="btn btn-32 btn-secondary" id="filter_test"><i class="fas fa-filter"></i></button>#}
-                        <button type="button" class="btn btn-32 btn-secondary" id="delete_test"><i class="fas fa-trash-alt"></i></button>
+                        <button type="button" class="btn btn-32 btn-secondary" id="create_test"
+                                data-toggle="modal" data-target="#createApplicationTest"><i
+                                class="fas fa-plus"></i></button>
+                        <button type="button" class="btn btn-32 btn-secondary" id="filter_test"><i
+                                class="fas fa-filter"></i></button>
+                        <button type="button" class="btn btn-32 btn-secondary" id="delete_test"><i
+                                class="fas fa-trash-alt"></i></button>
                     </div>
-                </div>
-            </div>
-        </div>
-
-            <div class="card-body card-table">
-                <table class="table table-borderless"
-                       id="tests-list"
-                       data-unique-id="id"
-                       data-toggle="table"
-                       data-url="/api/v1/security/tests/{{ tools.session_project.get() }}"
-                       data-pagination="true"
-                       data-page-size=5
-                       data-side-pagination="server"
-                       data-pagination-parts='["pageInfoShort", "pageList"]'
-                >
-                    <thead class="thead-light">
-                    <tr>
-                        <th scope="col" data-checkbox="true"></th>
-                        <th scope="col" data-sortable="true" data-field="name">Name</th>
-                        <th scope="col" data-sortable="true" data-field="urls_to_scan">Urls</th>
-                        <th scope="col" data-sortable="true" data-field="test_uid" data-visible="false">Uuid</th>
-                        <th scope="col" data-sortable="true" data-field="integrations"
-                            data-formatter="tableFormatters.tests_tools"
-                        >
-                            Tools
-                        </th>
-                        <th scope="col"
-                            data-align="right"
-                            data-events="tableFormatters.status_events"
-                            data-formatter="tableFormatters.tests_actions"
-                            data-width="100" data-width-unit="px"
-                        >
-                            Actions
-                        </th>
-                    </tr>
-                    </thead>
-                </table>
-            </div>
-        </div>
-
-        <div class="card card-x">
-
-            <div class="card-header">
-                <div class="row">
-                    <div class="col-4">
-                        <h3>Thresholds</h3>
-                    </div>
-                    <div class="col-8">
-                        <div class="d-flex justify-content-end">
-                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-plus"></i></button>
-                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-sync"></i></button>
-                            <button type="button" class="btn btn-32 btn-secondary"><i
-                                    class="fas fa-filter"></i></button>
-                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-tag"></i></button>
-                            <button type="button" class="btn btn-32 btn-secondary"><i
-                                    class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-body card-table">
-                <table class="table table-borderless"
-                       id="threshold-list"
-                       data-toggle="table"
-                       data-side-pagination="server"
-                       data-virtual-scroll="true"
-                       data-pagination-parts='["pageInfoShort", "pageList"]'
-                >
-                    <thead class="thead-light">
-                    <tr>
-                        <th scope="col" data-checkbox="true"></th>
-                        <th data-visible="false" data-field="id">index</th>
-                        <th scope="col" data-sortable="true" data-field="name" data-formatter=createLinkToTest>Name</th>
-                        <th scope="col" data-sortable="true" data-field="tests_count">Tests Count</th>
-                        <th scope="col" data-sortable="true" data-formatter="lgFormatter">Runners</th>
-                        <th scope="col" data-field="lg_type">Actions</th>
-                    </tr>
-                    </thead>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="card card-12">
-
-            <div class="card-header">
-                <div class="row">
-                    <div class="col-4">
-                        <h3>Reports</h3>
-                    </div>
-                    <div class="col-8">
-                        <div class="d-flex justify-content-end">
-                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-sync"></i></button>
-                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-filter"></i></button>
-                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-tag"></i></button>
-                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-                <div class="card-body card-table">
-                    <table class="table table-borderless"
-                           id="results-list"
-                           data-toggle="table"
-                           data-url="/api/v1/security/results/{{ tools.session_project.get() }}"
-                           data-virtual-scroll="true"
-                           data-pagination="true"
-                           data-page-size=10
-                           data-side-pagination="server"
-                           data-pagination-parts='["pageInfoShort", "pageList"]'
+                </template>
+                <template #table_headers>
+                    <th scope="col" data-checkbox="true"></th>
+                    <th scope="col" data-sortable="true" data-field="name">Name</th>
+                    <th scope="col" data-sortable="true" data-field="urls_to_scan">Urls</th>
+                    <th scope="col" data-sortable="true" data-field="test_uid" data-visible="false">Uuid</th>
+                    <th scope="col" data-sortable="true" data-field="integrations"
+                        data-formatter="tableFormatters.tests_tools"
                     >
-                        <thead class="thead-light">
-                        <tr>
-                            <th scope="col" data-checkbox="true"></th>
-                            <th data-visible="false" data-field="id">index</th>
-                            <th scope="col" data-sortable="true" data-field="test_name" data-formatter="tableFormatters.reports_test_name_button">
-                                Name
-                            </th>
-                            <th scope="col" data-sortable="true" data-field="start_date">Start</th>
-                            <th scope="col" data-sortable="true" data-field="duration">Duration</th>
-                            <th scope="col" data-sortable="true" data-field="findings">Findings</th>
-                            <th scope="col" data-sortable="true" data-field="false_positive">False Positive</th>
-                            <th scope="col" data-sortable="true" data-field="excluded">Excl</th>
-                            <th scope="col" data-sortable="true" data-field="info">Info</th>
-                            <th scope="col" data-sortable="true" data-field="tags" data-formatter="reportsTagFormatter">
-                                Tag
-                            </th>
-                            <th scope="col" data-field="test_status.status" data-formatter="tableFormatters.reports_status_formatter">
-                                Status
-                            </th>
-                        </tr>
-                        </thead>
-                    </table>
-            </div>
+                        Tools
+                    </th>
+                    <th scope="col"
+                        data-align="right"
+                        data-events="tableFormatters.status_events"
+                        data-formatter="tableFormatters.tests_actions"
+                        data-width="100" data-width-unit="px"
+                    >
+                        Actions
+                    </th>
+                </template>
+            </Table-Card>
+        </div>
+        <div class="flex-item-2">
+            {#            <div class="card card-table-sm">#}
+            {#                <div class="card-header">#}
+            {#                    <div class="row">#}
+            {#                        <div class="col-4">#}
+            {#                            <h3>Thresholds</h3>#}
+            {#                        </div>#}
+            {#                        <div class="col-8">#}
+            {#                            <div class="d-flex justify-content-end">#}
+            {#                                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-plus"></i>#}
+            {#                                </button>#}
+            {#                                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-sync"></i>#}
+            {#                                </button>#}
+            {#                                <button type="button" class="btn btn-32 btn-secondary"><i#}
+            {#                                        class="fas fa-filter"></i></button>#}
+            {#                                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-tag"></i>#}
+            {#                                </button>#}
+            {#                                <button type="button" class="btn btn-32 btn-secondary"><i#}
+            {#                                        class="fas fa-trash-alt"></i></button>#}
+            {#                            </div>#}
+            {#                        </div>#}
+            {#                    </div>#}
+            {#                </div>#}
+            {#                <div class="card-body card-table">#}
+            {#                    <table class="table table-borderless"#}
+            {#                           id="threshold-list"#}
+            {#                           data-toggle="table"#}
+            {#                           data-side-pagination="server"#}
+            {#                           data-virtual-scroll="true"#}
+            {#                           data-pagination-parts='["pageInfoShort", "pageList"]'#}
+            {#                    >#}
+            {#                        <thead class="thead-light">#}
+            {#                        <tr>#}
+            {#                            <th scope="col" data-checkbox="true"></th>#}
+            {#                            <th data-visible="false" data-field="id">index</th>#}
+            {#                            <th scope="col" data-sortable="true" data-field="name" data-formatter=createLinkToTest>#}
+            {#                                Name#}
+            {#                            </th>#}
+            {#                            <th scope="col" data-sortable="true" data-field="tests_count">Tests Count</th>#}
+            {#                            <th scope="col" data-sortable="true" data-formatter="lgFormatter">Runners</th>#}
+            {#                            <th scope="col" data-field="lg_type">Actions</th>#}
+            {#                        </tr>#}
+            {#                        </thead>#}
+            {#                    </table>#}
+            {#                </div>#}
+            {#            </div>#}
+        </div>
     </div>
 
-{#    {{ template_slot("create_test", payload=config) | safe }}#}
+    <Table-Card
+            @register="register"
+            instance_name="table_reporters"
+
+            header='Reporters'
+{#            :borders="true"#}
+            :table_attributes="{
+                'data-url': '/api/v1/security/results/{{ tools.session_project.get() }}',
+            }"
+            container_classes="mt-3"
+    >
+        <template #actions>
+            <div class="d-flex justify-content-end">
+{#                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-sync"></i></button>#}
+{#                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-filter"></i></button>#}
+{#                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-tag"></i></button>#}
+                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        </template>
+        <template #table_headers>
+            <th scope="col" data-checkbox="true"></th>
+            <th data-visible="false" data-field="id">index</th>
+            <th scope="col" data-sortable="true" data-field="test_name"
+                data-formatter="tableFormatters.reports_test_name_button">
+                Name
+            </th>
+            <th scope="col" data-sortable="true" data-field="start_date">Start</th>
+            <th scope="col" data-sortable="true" data-field="duration">Duration</th>
+            <th scope="col" data-sortable="true" data-field="findings">Findings</th>
+            <th scope="col" data-sortable="true" data-field="false_positive">False Positive</th>
+            <th scope="col" data-sortable="true" data-field="excluded">Excl</th>
+            <th scope="col" data-sortable="true" data-field="info">Info</th>
+            <th scope="col" data-sortable="true" data-field="tags" data-formatter="reportsTagFormatter">
+                Tag
+            </th>
+            <th scope="col" data-field="test_status.status"
+                data-formatter="tableFormatters.reports_status_formatter">
+                Status
+            </th>
+        </template>
+    </Table-Card>
+
+    {#    {{ template_slot("create_test", payload=config) | safe }}#}
     {% include 'security:app/modal.html' %}
+
+
+{#    <div class="card card-table-sm">#}
+{#                    <div class="card-header">#}
+{#                        <div class="row">#}
+{#                            <div class="col-4">#}
+{#                                <h3>Table Widget</h3>#}
+{#                            </div>#}
+{#                            <div class="col-8">#}
+{#                                <div class="d-flex justify-content-end">#}
+{#                                    <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-plus"></i></button>#}
+{#                                    <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-sync"></i></button>#}
+{#                                    <button type="button" class="btn btn-32 btn-secondary"><i#}
+{#                                            class="fas fa-filter"></i></button>#}
+{#                                    <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-tag"></i></button>#}
+{#                                    <button type="button" class="btn btn-32 btn-secondary"><i#}
+{#                                            class="fas fa-trash-alt"></i></button>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{##}
+{#                    </div>#}
+{#                    <div class="card-body">#}
+{#                        <table#}
+{#                                class="table table-borderless"#}
+{#                                id="tests-list"#}
+{#                                data-toggle="table"#}
+{#                                data-unique-id="id"#}
+{#                                data-pagination-pre-text="<img src='/design-system/static/assets/ico/arrow_left.svg'>"#}
+{#                    data-pagination-next-text="<img src='/design-system/static/assets/ico/arrow_right.svg'>"#}
+{#                                data-page-size=5 data-pagination="true"#}
+{#                                data-data='{#}
+{#                            "total": 6,#}
+{#                            "rows": [#}
+{#                                {#}
+{#                                    "id": 4,#}
+{#                                    "project_id": 3,#}
+{#                                    "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                                    "name": "PetsDemoKaren1",#}
+{#                                    "parallel": 1,#}
+{#                                    "region": "default",#}
+{#                                    "bucket": "",#}
+{#                                    "file": "",#}
+{#                                    "entrypoint": "Petclinic.jmx",#}
+{#                                    "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                                    "emails": "karen_florykian@epam.com",#}
+{#                                    "env_vars": {},#}
+{#                                    "customization": {},#}
+{#                                    "cc_env_vars": {},#}
+{#                                    "last_run": null,#}
+{#                                    "job_type": "perfmeter"#}
+{#                                },#}
+{#                                {#}
+{#                                    "id": 3,#}
+{#                                    "project_id": 3,#}
+{#                                    "test_uid": "592cc59f-c09d-4026-83e2-2d0be768b1b4",#}
+{#                                    "name": "TestDistributed",#}
+{#                                    "parallel": 1,#}
+{#                                    "region": "default",#}
+{#                                    "bucket": "tests",#}
+{#                                    "file": "Archive_flood.zip",#}
+{#                                    "entrypoint": "FloodIO.jmx",#}
+{#                                    "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                                    "emails": "mykhailo_hunko@epam.com",#}
+{#                                    "env_vars": {},#}
+{#                                    "customization": {},#}
+{#                                    "cc_env_vars": {},#}
+{#                                    "git": {},#}
+{#                                    "last_run": null,#}
+{#                                    "job_type": "perfmeter"#}
+{#                                },#}
+{#                                {#}
+{#                                    "id": 2,#}
+{#                                    "project_id": 3,#}
+{#                                    "test_uid": "4d4ea128-f32d-4bc4-a48d-1a4ac7053b03",#}
+{#                                    "name": "PetsDemo",#}
+{#                                    "parallel": 1,#}
+{#                                    "region": "default",#}
+{#                                    "bucket": "",#}
+{#                                    "file": "",#}
+{#                                    "entrypoint": "Petclinic.jmx",#}
+{#                                    "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                                    "emails": "karen_florykian@epam.com",#}
+{#                                    "env_vars": {},#}
+{#                                    "customization": {},#}
+{#                                    "cc_env_vars": {},#}
+{#                                    "last_run": null,#}
+{#                                    "job_type": "perfmeter"#}
+{#                                }, {#}
+{#                                    "id": 5,#}
+{#                                    "project_id": 3,#}
+{#                                    "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                                    "name": "PetsDemoKaren1",#}
+{#                                    "parallel": 1,#}
+{#                                    "region": "default",#}
+{#                                    "bucket": "",#}
+{#                                    "file": "",#}
+{#                                    "entrypoint": "Petclinic.jmx",#}
+{#                                    "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                                    "emails": "karen_florykian@epam.com",#}
+{#                                    "env_vars": {},#}
+{#                                    "customization": {},#}
+{#                                    "cc_env_vars": {},#}
+{#                                    "last_run": null,#}
+{#                                    "job_type": "perfmeter"#}
+{#                                },#}
+{#                                {#}
+{#                                    "id": 1,#}
+{#                                    "project_id": 3,#}
+{#                                    "test_uid": "592cc59f-c09d-4026-83e2-2d0be768b1b4",#}
+{#                                    "name": "TestDistributed",#}
+{#                                    "parallel": 1,#}
+{#                                    "region": "default",#}
+{#                                    "bucket": "tests",#}
+{#                                    "file": "Archive_flood.zip",#}
+{#                                    "entrypoint": "FloodIO.jmx",#}
+{#                                    "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                                    "emails": "mykhailo_hunko@epam.com",#}
+{#                                    "env_vars": {},#}
+{#                                    "customization": {},#}
+{#                                    "cc_env_vars": {},#}
+{#                                    "git": {},#}
+{#                                    "last_run": null,#}
+{#                                    "job_type": "perfmeter"#}
+{#                                },#}
+{#                                {#}
+{#                                    "id": 6,#}
+{#                                    "project_id": 3,#}
+{#                                    "test_uid": "4d4ea128-f32d-4bc4-a48d-1a4ac7053b03",#}
+{#                                    "name": "PetsDemo",#}
+{#                                    "parallel": 1,#}
+{#                                    "region": "default",#}
+{#                                    "bucket": "",#}
+{#                                    "file": "",#}
+{#                                    "entrypoint": "Petclinic.jmx",#}
+{#                                    "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                                    "emails": "karen_florykian@epam.com",#}
+{#                                    "env_vars": {},#}
+{#                                    "customization": {},#}
+{#                                    "cc_env_vars": {},#}
+{#                                    "last_run": null,#}
+{#                                    "job_type": "perfmeter"#}
+{#                                }#}
+{#                            ]#}
+{#                        }'>#}
+{#                            <thead class="thead-light">#}
+{#                            <tr>#}
+{#                                <th data-visible="false" data-field="id">index</th>#}
+{#                                <th scope="col" data-sortable="true" data-cell-style="nameStyle" data-field="name">Name</th>#}
+{#                                <th scope="col" data-sortable="true" data-cell-style="nameStyle" data-field="test_uid">UUID#}
+{#                                </th>#}
+{#                                <th scope="col" data-sortable="true" data-cell-style="nameStyle" data-field="entrypoint">#}
+{#                                    Entrypoint</th>#}
+{#                                <th scope="col" data-align="center" data-sortable="true" data-formatter=lgFormatter#}
+{#                                    data-field="job_type">Tool</th>#}
+{#                                <th scope="col" data-align="right" data-cell-style="cellStyle"#}
+{#                                    data-formatter=actionFormatter>Actions</th>#}
+{#                            </tr>#}
+{#                            </thead>#}
+{#                            <tbody>#}
+{#                            </tbody>#}
+{#                        </table>#}
+{#                    </div>#}
+{#                </div>#}
+{#    <div class="card mt-3 card-table-sm">#}
+{#            <div class="card-header">#}
+{#                <div class="row">#}
+{#                    <div class="col-4">#}
+{#                        <h3>Report Block</h3>#}
+{#                    </div>#}
+{#                    <div class="col-8">#}
+{#                        <div class="d-flex justify-content-end">#}
+{#                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-plus"></i></button>#}
+{#                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-sync"></i></button>#}
+{#                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-filter"></i></button>#}
+{#                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-tag"></i></button>#}
+{#                            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-trash-alt"></i></button>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#            </div>#}
+{#            <div class="card-body">#}
+{#                <table class="table table-border" id="tests-list-first"#}
+{#                    data-toggle="table"#}
+{#                    data-unique-id="id"#}
+{#                    data-page-list="[5, 10, 15]"#}
+{#                    data-pagination="true"#}
+{#                    data-pagination-pre-text="<img src='assets/ico/arrow_left.svg'>"#}
+{#                    data-pagination-next-text="<img src='assets/ico/arrow_right.svg'>"#}
+{#                    data-page-size=5#}
+{#                    data-data='{#}
+{#                    "total": 12 ,#}
+{#                    "rows": [#}
+{#                        {#}
+{#                            "id": 4,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                            "name": "PetsDemoKaren1",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 123,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                            "name": "PetsDemoKaren1",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 4435,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                            "name": "PetsDemoKaren1",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 454,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                            "name": "PetsDemoKaren1",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 4211,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                            "name": "PetsDemoKaren1",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 1231234,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                            "name": "PetsDemoKaren1",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 434643,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                            "name": "PetsDemoKaren1",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 3,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "592cc59f-c09d-4026-83e2-2d0be768b1b4",#}
+{#                            "name": "TestDistributed",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "tests",#}
+{#                            "file": "Archive_flood.zip",#}
+{#                            "entrypoint": "FloodIO.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "mykhailo_hunko@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "git": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 2,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "4d4ea128-f32d-4bc4-a48d-1a4ac7053b03",#}
+{#                            "name": "PetsDemo",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        }, {#}
+{#                            "id": 5,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "06bccf22-38c9-4a9d-889f-07ed76542d9e",#}
+{#                            "name": "PetsDemoKaren1",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 1,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "592cc59f-c09d-4026-83e2-2d0be768b1b4",#}
+{#                            "name": "TestDistributed",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "tests",#}
+{#                            "file": "Archive_flood.zip",#}
+{#                            "entrypoint": "FloodIO.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "mykhailo_hunko@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "git": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        },#}
+{#                        {#}
+{#                            "id": 6,#}
+{#                            "project_id": 3,#}
+{#                            "test_uid": "4d4ea128-f32d-4bc4-a48d-1a4ac7053b03",#}
+{#                            "name": "PetsDemo",#}
+{#                            "parallel": 1,#}
+{#                            "region": "default",#}
+{#                            "bucket": "",#}
+{#                            "file": "",#}
+{#                            "entrypoint": "Petclinic.jmx",#}
+{#                            "runner": "getcarrier/perfmeter:latest-5.3",#}
+{#                            "emails": "karen_florykian@epam.com",#}
+{#                            "env_vars": {},#}
+{#                            "customization": {},#}
+{#                            "cc_env_vars": {},#}
+{#                            "last_run": null,#}
+{#                            "job_type": "perfmeter"#}
+{#                        }#}
+{#                    ]#}
+{#                }'>#}
+{#                    <thead class="thead-light">#}
+{#                        <tr>#}
+{#                            <th scope="col" data-checkbox="true"></th>#}
+{#                            <th data-visible="false" data-field="id">index</th>#}
+{#                            <th scope="col" data-sortable="true" data-cell-style="nameStyle" data-field="name">Name</th>#}
+{#                            <th scope="col" data-sortable="true" data-cell-style="nameStyle" data-field="test_uid">UUID#}
+{#                            </th>#}
+{#                            <th scope="col" data-sortable="true" data-cell-style="nameStyle" data-field="entrypoint">#}
+{#                                Entrypoint</th>#}
+{#                            <th scope="col" data-align="center" data-sortable="true" data-formatter=lgFormatter#}
+{#                                data-field="job_type">Tool</th>#}
+{#                            <th scope="col" data-align="right" data-cell-style="cellStyle" data-formatter=actionFormatter>Actions#}
+{#                            </th>#}
+{#                        </tr>#}
+{#                    </thead>#}
+{#                    <tbody>#}
+{#                    </tbody>#}
+{#                </table>#}
+{#            </div>#}
+{#        </div>#}
 </div>

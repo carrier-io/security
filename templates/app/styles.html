@@ -1,2 +1,3 @@
 <link rel="stylesheet" href="{{ url_for('security.static', filename='css/app.css') }}">
 {{ template_slot('params_table_styles') | safe }}
+{{ template_slot("integrations_security_app_styles") | safe }}

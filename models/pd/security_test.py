@@ -2,12 +2,16 @@ from typing import Optional, List, ForwardRef
 from uuid import uuid4
 from pydantic import BaseModel, validator, AnyUrl, parse_obj_as, root_validator
 
-from ..api_tests import SecurityTestsDAST
+from ..tests import SecurityTestsDAST
 
 from ....shared.models.pd.test_parameters import TestParameter  # todo: workaround for this import
 
 
-class SecurityTestParams(BaseModel):
+class SecurityTestParamsBase(BaseModel):
+    """
+    Base case class for security test.
+    Used as a parent class for actual security tet model
+    """
     _test_params_mapping = {
         'url to scan': 'urls_to_scan',
         'exclusions': 'urls_exclusions',
@@ -39,7 +43,7 @@ class SecurityTestParams(BaseModel):
         )
         return instance
 
-    def update(self, other: ForwardRef('SecurityTestParams')):
+    def update(self, other: ForwardRef('SecurityTestParamsBase')):
         test_params_names = set(map(lambda tp: tp.name, other.test_parameters))
         modified_params = other.test_parameters
         for tp in self.test_parameters:
@@ -54,13 +58,16 @@ class SecurityTestParams(BaseModel):
             self.scan_location = other.scan_location
 
 
-SecurityTestParams.update_forward_refs()
+SecurityTestParamsBase.update_forward_refs()
 
 
 _required_params = {'url to scan', }
 
 
 class SecurityTestParam(TestParameter):
+    """
+    Each ROW of test_params table
+    """
     _type_mapping_by_name = {'url to scan': List[AnyUrl]}
     _required_params = _required_params
 
@@ -71,7 +78,10 @@ class SecurityTestParam(TestParameter):
         return value
 
 
-class SecurityTestParamsCommon(SecurityTestParams):
+class SecurityTestParamsCommon(SecurityTestParamsBase):
+    """
+    Whole test_params table
+    """
     _required_params = _required_params
     test_parameters: List[SecurityTestParam]
 
@@ -83,6 +93,9 @@ class SecurityTestParamsCommon(SecurityTestParams):
 
 
 class SecurityTestCommon(BaseModel):
+    """
+    Model of test itself without test_params or other plugin module's data
+    """
     # _empty_str_to_none = empty_str_to_none
     project_id: int
     project_name: str
