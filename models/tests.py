@@ -122,6 +122,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                     scanners_config[scanner_name] = \
                         self.rpc.call_function_with_timeout(
                             func=f'dusty_config_{scanner_name}',
+                            timeout=2,
                             context=None,
                             test_params=self.__dict__,
                             scanner_params=self.integrations["scanners"][scanner_name],
@@ -149,6 +150,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                     reporters_config[reporter_name] = \
                         self.rpc.call_function_with_timeout(
                             func=f'dusty_config_{reporter_name}',
+                            timeout=2,
                             context=None,
                             test_params=self.__dict__,
                             scanner_params=self.integrations["reporters"][reporter_name],
@@ -169,22 +171,26 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                     "{{secret.galloper_url}}",
                     project_id=self.project_id
                 ),
+                "token": secrets_tools.unsecret(
+                    "{{secret.auth_token}}",
+                    project_id=self.project_id
+                ),
                 "project_id": str(self.project_id),
                 "test_id": str(self.results_test_id),
             }
 
 
-            reporters_config["galloper"] = {
-                "url": secrets_tools.unsecret(
-                    "{{secret.galloper_url}}",
-                    project_id=self.project_id
-                ),
-                "project_id": f"{self.project_id}",
-                "token": secrets_tools.unsecret(
-                    "{{secret.auth_token}}",
-                    project_id=self.project_id
-                ),
-            }
+            # reporters_config["centry"] = {
+            #     "url": secrets_tools.unsecret(
+            #         "{{secret.galloper_url}}",
+            #         project_id=self.project_id
+            #     ),
+            #     "project_id": f"{self.project_id}",
+            #     "token": secrets_tools.unsecret(
+            #         "{{secret.auth_token}}",
+            #         project_id=self.project_id
+            #     ),
+            # }
             # TODO: check valid reports names
             # for report_type in self.reporting:
             #     if report_type == "toolreports":
@@ -300,28 +306,28 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                             "quality_gate": {
                                 "thresholds": tholds
                             },
-                            "false_positive": {
-                                "galloper": secrets_tools.unsecret(
-                                    "{{secret.galloper_url}}",
-                                    project_id=self.project_id
-                                ),
-                                "project_id": f"{self.project_id}",
-                                "token": secrets_tools.unsecret(
-                                    "{{secret.auth_token}}",
-                                    project_id=self.project_id
-                                )
-                            },
-                            "ignore_finding": {
-                                "galloper": secrets_tools.unsecret(
-                                    "{{secret.galloper_url}}",
-                                    project_id=self.project_id
-                                ),
-                                "project_id": f"{self.project_id}",
-                                "token": secrets_tools.unsecret(
-                                    "{{secret.auth_token}}",
-                                    project_id=self.project_id
-                                )
-                            }
+                            # "false_positive": {
+                            #     "galloper": secrets_tools.unsecret(
+                            #         "{{secret.galloper_url}}",
+                            #         project_id=self.project_id
+                            #     ),
+                            #     "project_id": f"{self.project_id}",
+                            #     "token": secrets_tools.unsecret(
+                            #         "{{secret.auth_token}}",
+                            #         project_id=self.project_id
+                            #     )
+                            # },
+                            # "ignore_finding": {
+                            #     "galloper": secrets_tools.unsecret(
+                            #         "{{secret.galloper_url}}",
+                            #         project_id=self.project_id
+                            #     ),
+                            #     "project_id": f"{self.project_id}",
+                            #     "token": secrets_tools.unsecret(
+                            #         "{{secret.auth_token}}",
+                            #         project_id=self.project_id
+                            #     )
+                            # }
                         },
                         "reporters": reporters_config
                     }
@@ -339,7 +345,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
         # container = f"getcarrier/sast:latest"
         container = f"getcarrier/dast:latest"
         parameters = {
-            "cmd": f"run -b galloper:{job_type}_{self.test_uid} -s {job_type}",
+            "cmd": f"run -b centry:{job_type}_{self.test_uid} -s {job_type}",
             "GALLOPER_URL": secrets_tools.unsecret(
                 "{{secret.galloper_url}}",
                 project_id=self.project_id
