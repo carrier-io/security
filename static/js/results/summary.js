@@ -1,6 +1,6 @@
 const updateSummary = async () => {
-    const testId = new URLSearchParams(location.search).get('result_test_id')
-    const response = await fetch(`/api/v1/security/${getSelectedProjectId()}/dast/${testId}`)
+    const testId = result_test_id
+    const response = await fetch(`/api/v1/security/result/${project_id}/${testId}/`)
     const data = await response.json()
 
     // console.log('New data', data)
@@ -13,8 +13,8 @@ const updateSummary = async () => {
 }
 
 const reRunTest = () => {
-    let search = new URLSearchParams(location.search)
-    const testId = search.get('result_test_id')
+    // let search = new URLSearchParams(location.search)
+    const testId = result_test_id
     fetch(`/api/v1/security/rerun/${testId}`, {
         method: 'POST'
     }).then(response => {
