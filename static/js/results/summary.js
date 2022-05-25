@@ -20,8 +20,8 @@ const reRunTest = () => {
     }).then(response => {
         if (response.ok) {
             response.json().then(({result_id}) => {
-                search.set('result_test_id', result_id)
-                alertMain.add(`Test rerun successful! Check out the <a href="/?${search}">result page</a>`, 'success-overlay', true)
+                // search.set('result_test_id', result_id)
+                alertMain.add(`Test rerun successful! Check out the <a href="?result_id=${result_id}">result page</a>`, 'success-overlay', true)
             })
         } else {
             response.text().then(data => {
