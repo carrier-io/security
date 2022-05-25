@@ -119,7 +119,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
 
             for scanner_name in self.integrations.get('scanners', []):
                 try:
-                    scanners_config[scanner_name] = \
+                    config_name, config_data = \
                         self.rpc.call_function_with_timeout(
                             func=f'dusty_config_{scanner_name}',
                             timeout=2,
@@ -127,6 +127,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                             test_params=self.__dict__,
                             scanner_params=self.integrations["scanners"][scanner_name],
                         )
+                    scanners_config[config_name] = config_data
                 except Empty:
                     log.warning(f'Cannot find scanner config rpc for {scanner_name}')
 
@@ -147,7 +148,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             reporters_config = dict()
             for reporter_name in self.integrations.get('reporters', []):
                 try:
-                    reporters_config[reporter_name] = \
+                    config_name, config_data = \
                         self.rpc.call_function_with_timeout(
                             func=f'dusty_config_{reporter_name}',
                             timeout=2,
@@ -155,6 +156,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                             test_params=self.__dict__,
                             scanner_params=self.integrations["reporters"][reporter_name],
                         )
+                    reporters_config[config_name] = config_data
                 except Empty:
                     log.warning(f'Cannot find reporter config rpc for {reporter_name}')
 
@@ -180,17 +182,18 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             }
 
 
-            # reporters_config["centry"] = {
-            #     "url": secrets_tools.unsecret(
-            #         "{{secret.galloper_url}}",
-            #         project_id=self.project_id
-            #     ),
-            #     "project_id": f"{self.project_id}",
-            #     "token": secrets_tools.unsecret(
-            #         "{{secret.auth_token}}",
-            #         project_id=self.project_id
-            #     ),
-            # }
+            reporters_config["centry"] = {
+                "url": secrets_tools.unsecret(
+                    "{{secret.galloper_url}}",
+                    project_id=self.project_id
+                ),
+                "token": secrets_tools.unsecret(
+                    "{{secret.auth_token}}",
+                    project_id=self.project_id
+                ),
+                "project_id": str(self.project_id),
+                "test_id": str(self.results_test_id),
+            }
             # TODO: check valid reports names
             # for report_type in self.reporting:
             #     if report_type == "toolreports":

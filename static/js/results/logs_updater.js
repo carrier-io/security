@@ -1,6 +1,9 @@
 const LogsApp = {
+    delimiters: ['[[', ']]'],
+    props: ['project_id', 'test_id', 'result_test_id'],
     data() {
         return {
+            websocket_api_url: '',
             state: 'unknown',
             websocket: undefined,
             connection_retries: 5,
@@ -10,7 +13,9 @@ const LogsApp = {
 
     },
     mounted() {
-
+      console.log("Logs: mounted()")
+      this.websocket_api_url = `/api/v1/security/loki_url/${this.project_id}/?task_id=${this.test_id}&result_test_id=${this.result_test_id}`
+      this.init_websocket()
     },
     // updated() {
     //     var item = $("#logs-body");
@@ -20,11 +25,6 @@ const LogsApp = {
         reversedLogs: function () {
             return this.logs.reverse()
         },
-        page_params: () => new URLSearchParams(location.search),
-        test_id: () => this.page_params.get('test_id'),
-        project_id: () => this.page_params.get('project_id'),
-        result_test_id: () => this.page_params.get('result_test_id'),
-        websocket_api_url: () => `/api/v1/security/${project_id}/get_url?task_id=${test_id}&result_test_id=${result_test_id}`
     },
     template: `
         <div class="card card-12 mb-5">
@@ -46,15 +46,18 @@ const LogsApp = {
     `,
     methods: {
         init_websocket() {
+            console.log("Logs: init_websocket()")
             fetch(this.websocket_api_url, {
                 method: 'GET'
             }).then(response => {
                 if (response.ok) {
-                    this.websocket = new WebSocket(data['websocket_url'])
-                    this.websocket.onmessage = this.on_websocket_message
-                    this.websocket.onopen = this.on_websocket_open
-                    this.websocket.onclose = this.on_websocket_close
-                    this.websocket.onerror = this.on_websocket_error
+                    response.json().then(data => {
+                      this.websocket = new WebSocket(data.websocket_url)
+                      this.websocket.onmessage = this.on_websocket_message
+                      this.websocket.onopen = this.on_websocket_open
+                      this.websocket.onclose = this.on_websocket_close
+                      this.websocket.onerror = this.on_websocket_error
+                    })
                 } else {
                     console.warn('Websocket failed to initialize', response)
                 }

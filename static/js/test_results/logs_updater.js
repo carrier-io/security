@@ -24,7 +24,7 @@ const LogsApp = {
         test_id: () => this.page_params.get('test_id'),
         project_id: () => this.page_params.get('project_id'),
         result_test_id: () => this.page_params.get('result_test_id'),
-        websocket_api_url: () => `/api/v1/security/${project_id}/get_url?task_id=${test_id}&result_test_id=${result_test_id}`
+        websocket_api_url: () => `/api/v1/security/loki_url/${project_id}/?task_id=${test_id}&result_test_id=${result_test_id}`
     },
     template: `
         <div class="card card-12 mb-5">
