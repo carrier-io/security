@@ -35,7 +35,7 @@ class API(Resource):
             _res = issue.to_json()
             _res["details"] = SecurityDetails.query.filter_by(id=_res["details"]).first().details
             results.append(_res)
-        return make_response(results, 200)
+        return results
 
     def put(self, project_id: int, test_id: int):
         args = request.json
@@ -84,7 +84,7 @@ class API(Resource):
         results.update_findings_counts()
         return make_response(accept_message, 204)
 
-    def post(self, project_id: int, *args):
+    def post(self, project_id: int, *args, **kvargs):
         finding_db = None
         for finding in request.json:
             md5 = hashlib.md5(finding["details"].encode("utf-8")).hexdigest()

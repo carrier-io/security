@@ -20,7 +20,7 @@ class API(Resource):
     def get(self, project_id: int, seed: str):
         """ Get config for seed """
         args = request.args
-        project = self.module.context.rpc_manager.project_get_or_404(project_id=project_id)
+        project = self.module.context.rpc_manager.call.project_get_or_404(project_id=project_id)
 
         test_type = seed.split("_")[0]
         test_id = seed.split("_")[1]

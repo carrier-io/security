@@ -141,14 +141,18 @@
 
 {% if test_finished %}
     {% include 'security:results/show_config.html' %}
-{#    {% include 'security:results/findings_table.html' %}#}
-{#    {% include 'security:results/artifacts_table.html' %}#}
+    {% include 'security:results/findings_table.html' %}
+    {% include 'security:results/artifacts_table.html' %}
 
 {#    {{ template_slot("security_results_show_config", payload=test_data['test_config']) | safe }}#}
 {#    {{ template_slot("security_findings_table", payload=config) | safe }}#}
 {#    {{ template_slot("security_artifacts_table", payload=config) | safe }}#}
 
 {% else %}
-    <LogsApp></LogsApp>
+    <LogsApp
+      :project_id="{{ test_data.project_id }}"
+      :test_id="{{ test_data.test_id }}"
+      :result_test_id='{{ test_data.id }}'
+    ></LogsApp>
 
 {% endif %}

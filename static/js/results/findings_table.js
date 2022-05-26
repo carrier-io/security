@@ -1,22 +1,24 @@
-page_params = new URLSearchParams(window.location.search);
+// page_params = new URLSearchParams(window.location.search);
 
-let urlParamsFindings = '';
-const getTableUrlFindings = () => `/api/v1/security/${page_params.get('project_id')}/findings/${page_params.get('result_test_id')}${urlParamsFindings}`
+// let urlParamsFindings = '';
+// const getTableUrlFindings = () => `/api/v1/security/findings/${page_params.get('project_id')}/${page_params.get('result_test_id')}/${urlParamsFindings}`
 
-const severityOptions = [
-    {name: 'critical', className: 'colored-select-red'},
-    {name: 'high', className: 'colored-select-orange'},
-    {name: 'medium', className: 'colored-select-yellow'},
-    {name: 'low', className: 'colored-select-green'},
-    {name: 'info', className: 'colored-select-blue'},
-]
+const getTableUrlFindings = () => `/api/v1/security/findings/${project_id}/${result_test_id}/`
 
-const statusOptions = [
-    {name: 'valid', className: 'colored-select-red'},
-    {name: 'false positive', className: 'colored-select-blue'},
-    {name: 'ignored', className: 'colored-select-darkblue'},
-    {name: 'not defined', className: 'colored-select-notdefined'},
-]
+// const severityOptions = [
+//     {name: 'critical', className: 'colored-select-red'},
+//     {name: 'high', className: 'colored-select-orange'},
+//     {name: 'medium', className: 'colored-select-yellow'},
+//     {name: 'low', className: 'colored-select-green'},
+//     {name: 'info', className: 'colored-select-blue'},
+// ]
+//
+// const statusOptions = [
+//     {name: 'valid', className: 'colored-select-red'},
+//     {name: 'false positive', className: 'colored-select-blue'},
+//     {name: 'ignored', className: 'colored-select-darkblue'},
+//     {name: 'not defined', className: 'colored-select-notdefined'},
+// ]
 
 
 function tableSeverityButtonFormatter(value, row, index) {
@@ -28,7 +30,7 @@ function tableStatusButtonFormatter(value, row, index) {
 }
 
 
-const compareValues = (value1, value2) => value1.toLowerCase() === value2.toLowerCase()
+// const compareValues = (value1, value2) => value1.toLowerCase() === value2.toLowerCase()
 
 
 /*
@@ -63,28 +65,28 @@ const onSelectChange = (fieldName, value, issueHashes) => {
     })
 }
 
-const tableColoredSelectFormatter = (value, row, index, optionsList, fieldName) => {
-    const options = optionsList.map(item => `
-        <option 
-            class="${item.className}" 
-            ${compareValues(item.name, value) ? 'selected' : ''}
-        >
-            ${item.name}
-        </option>
-    `);
-    const unexpectedValue = optionsList.find(item => compareValues(item.name, value))
-    unexpectedValue === undefined && options.push(`<option selected>${value}</option>`)
-
-    return `
-        <select 
-            class="selectpicker btn-colored-select" 
-            data-style="btn-colored" 
-            onchange="onSelectChange('${fieldName}', this.value, ['${row['issue_hash']}'])"
-        >
-            ${options.join('')}
-        </select>
-    `
-}
+// const tableColoredSelectFormatter = (value, row, index, optionsList, fieldName) => {
+//     const options = optionsList.map(item => `
+//         <option
+//             class="${item.className}"
+//             ${compareValues(item.name, value) ? 'selected' : ''}
+//         >
+//             ${item.name}
+//         </option>
+//     `);
+//     const unexpectedValue = optionsList.find(item => compareValues(item.name, value))
+//     unexpectedValue === undefined && options.push(`<option selected>${value}</option>`)
+//
+//     return `
+//         <select
+//             class="selectpicker btn-colored-select"
+//             data-style="btn-colored"
+//             onchange="onSelectChange('${fieldName}', this.value, ['${row['issue_hash']}'])"
+//         >
+//             ${options.join('')}
+//         </select>
+//     `
+// }
 
 
 function renderTableFindings() {
