@@ -7,7 +7,7 @@ var tableFormatters = {
         // searchParams.set('result_test_id', row.id);
         // searchParams.set('test_id', row.test_id);
         // return `<a class="test form-control-label" href="?${searchParams.toString()}" role="button">${row.name}</a>`
-        return `<a class="test form-control-label" href="./results?result_id=${row.id}" role="button">${row.name}</a>`
+        return `<a href="./results?result_id=${row.id}" role="button">${row.name}</a>`
     },
     reports_status_formatter(value, row, index) {
         switch (value.toLowerCase()) {

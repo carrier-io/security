@@ -39,6 +39,12 @@
 .dropdown_multilevel .dropdown-menu {
 	width: 200px
 }
+
 .dropdown-menu i {
 	color: var(--gray600);
 }
+
+.dropdown-menu li:hover i {
+	color: var(--purple);
+}
+
