@@ -160,8 +160,8 @@ var apiActions = {
         alertCreateTest?.clear()
     },
     afterSave: () => {
-        $("#tests-list").bootstrapTable('refresh')
-        $("#results-list").bootstrapTable('refresh')
+        $("#application_tests_table").bootstrapTable('refresh')
+        $("#results_table").bootstrapTable('refresh')
         $("#security_test_save").removeClass("disabled updating")
         $("#security_test_save_and_run").removeClass("disabled updating")
     },

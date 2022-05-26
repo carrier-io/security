@@ -9,6 +9,7 @@
                     :table_attributes="{
                         'data-url': '/api/v1/security/tests/{{ tools.session_project.get() }}',
                         'data-page-size': 5,
+                        id: 'application_tests_table'
                     }"
             >
                 <template #actions>
@@ -94,12 +95,13 @@
 
     <Table-Card
             @register="register"
-            instance_name="table_reporters"
+            instance_name="table_results"
 
-            header='Reporters'
+            header='Results'
 {#            :borders="true"#}
             :table_attributes="{
                 'data-url': '/api/v1/security/results/{{ tools.session_project.get() }}',
+                id: 'results_table'
             }"
             container_classes="mt-3"
     >
