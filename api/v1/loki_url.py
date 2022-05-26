@@ -23,7 +23,7 @@ class API(Resource):
         if not key or not result_key:  # or key not in state:
             return make_response({"message": ""}, 404)
 
-        websocket_base_url = self.module.settings.settings['loki']['url']
+        websocket_base_url = self.module.context.settings['loki']['url']
         websocket_base_url = websocket_base_url.replace("http://", "ws://")
         websocket_base_url = websocket_base_url.replace("api/v1/push", "api/v1/tail")
 
