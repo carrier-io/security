@@ -1,12 +1,5 @@
 var tableFormatters = {
     reports_test_name_button(value, row, index) {
-        // const searchParams = new URLSearchParams(location.search);
-        // searchParams.set('module', 'Result');
-        // searchParams.set('page', 'list');
-        // searchParams.set('project_id', getSelectedProjectId());
-        // searchParams.set('result_test_id', row.id);
-        // searchParams.set('test_id', row.test_id);
-        // return `<a class="test form-control-label" href="?${searchParams.toString()}" role="button">${row.name}</a>`
         return `<a href="./results?result_id=${row.id}" role="button">${row.name}</a>`
     },
     reports_status_formatter(value, row, index) {
@@ -77,6 +70,20 @@ var tableFormatters = {
     tests_tools(value, row, index) {
         // todo: fix
         return Object.keys(value?.scanners || {})
+    },
+    application_urls(value, row, index) {
+        const enable_tooltip = JSON.stringify(value).length > 42  // because 42
+        return `<div 
+                    style="
+                        max-width: 240px;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        overflow: hidden;
+                    "
+                    ${enable_tooltip && 'data-toggle="infotip"'}
+                    data-placement="top" 
+                    title='${value}'
+                >${value}</div>`
     },
     status_events: {
         "click #test_run": function (e, value, row, index) {
@@ -178,4 +185,5 @@ $(document).on('vue_init', () => {
         ).join(',')
         ids_to_delete && apiActions.delete(ids_to_delete)
     })
+    $("#application_tests_table").on('all.bs.table', initTooltips)
 })
