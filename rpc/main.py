@@ -1,7 +1,8 @@
 from sqlalchemy.sql import func, LABEL_STYLE_TABLENAME_PLUS_COL
 
 from ..models.tests import SecurityTestsDAST
-from ..models.pd.security_test import SecurityTestParamsCommon, SecurityTestCommon, SecurityTestParamsBase
+# from ..models.pd.security_test import SecurityTestParamsCommon, SecurityTestCommon, SecurityTestParamsBase
+from ..models.pd.security_test import SecurityTestParams, SecurityTestCommon
 from ..models.reports import SecurityReport
 from ..models.results import SecurityResultsDAST
 from ..utils import run_test
@@ -36,7 +37,7 @@ class RPC:
     # @rpc_tools.wrap_exceptions(RuntimeError)
     @rpc_tools.wrap_exceptions(ValidationError)
     def parse_test_parameters(self, data: list, **kwargs) -> dict:
-        pd_object = SecurityTestParamsCommon(test_parameters=data)
+        pd_object = SecurityTestParams(test_parameters=data)
         return pd_object.dict(**kwargs)
 
     @web.rpc('security_test_create_common_parameters', 'parse_common_test_parameters')
@@ -56,8 +57,8 @@ class RPC:
     @rpc_tools.wrap_exceptions(RuntimeError)
     def run_scheduled_test(self, test_id: int, test_params: list) -> dict:
         test = SecurityTestsDAST.query.filter(SecurityTestsDAST.id == test_id).one()
-        test_params_schedule_pd = SecurityTestParamsBase(test_parameters=test_params)
-        test_params_existing_pd = SecurityTestParamsBase.from_orm(test)
+        test_params_schedule_pd = SecurityTestParams(test_parameters=test_params)
+        test_params_existing_pd = SecurityTestParams.from_orm(test)
         test_params_existing_pd.update(test_params_schedule_pd)
         test.__dict__.update(test_params_existing_pd.dict())
         return run_test(test)
