@@ -1,6 +1,7 @@
 const updateSummary = async () => {
-    const testId = result_test_id
-    const response = await fetch(`/api/v1/security/result/${project_id}/${testId}/`)
+    // const testId = result_test_id
+    const result_test_id = new URLSearchParams(location.search).get('result_id')
+    const response = await fetch(`/api/v1/security/result/${getSelectedProjectId()}/${result_test_id}/`)
     const data = await response.json()
 
     // console.log('New data', data)
@@ -14,8 +15,9 @@ const updateSummary = async () => {
 
 const reRunTest = () => {
     // let search = new URLSearchParams(location.search)
-    const testId = result_test_id
-    fetch(`/api/v1/security/rerun/${testId}`, {
+    // const testId = result_test_id
+    const result_test_id = new URLSearchParams(location.search).get('result_id')
+    fetch(`/api/v1/security/rerun/${result_test_id}`, {
         method: 'POST'
     }).then(response => {
         if (response.ok) {
@@ -30,11 +32,7 @@ const reRunTest = () => {
         }
     })
 }
-
-
-$( document ).on( 'updateSummaryEvent', updateSummary);
-
-$( document ).ready(() => {
+$(document).on('vue_init', () => {
     $('#show_config_btn').on('click', () => {
         $('#showConfigModal button').attr('disabled', true)
         $('#showConfigModal button[data-toggle=collapse]').attr('disabled', false)
@@ -44,4 +42,5 @@ $( document ).ready(() => {
     })
 
     $('#re_run_test').on('click', reRunTest)
+    $( document ).on( 'updateSummaryEvent', updateSummary);
 })

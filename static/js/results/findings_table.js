@@ -1,9 +1,12 @@
 // page_params = new URLSearchParams(window.location.search);
 
-// let urlParamsFindings = '';
+let urlParamsFindings = '';
 // const getTableUrlFindings = () => `/api/v1/security/findings/${page_params.get('project_id')}/${page_params.get('result_test_id')}/${urlParamsFindings}`
 
-const getTableUrlFindings = () => `/api/v1/security/findings/${project_id}/${result_test_id}/`
+const getTableUrlFindings = () => {
+    const result_test_id = new URLSearchParams(location.search).get('result_id')
+    return `/api/v1/security/findings/${getSelectedProjectId()}/${result_test_id}/${urlParamsFindings}`
+}
 
 // const severityOptions = [
 //     {name: 'critical', className: 'colored-select-red'},
@@ -144,10 +147,10 @@ const _findingsDetail = (index, row) => {
     `
 }
 
-$.when( $.ready ).then(function() {
+$(document).on('vue_init', () => {
     $('#errors').on('all.bs.table', function (e) {
-        $('.selectpicker').selectpicker('render');
-        initColoredSelect();
+        $('.selectpicker').selectpicker('render')
+        initColoredSelect()
     })
-    renderTableFindings();
-});
+    renderTableFindings()
+})

@@ -42,16 +42,6 @@
                     </div>
                 </div>
 
-{#                {% set params = [#}
-{#                    {"name": "URL to scan", "default": test_config['urls_to_scan'] | join(', '), "type": "List", "description": "Data"},#}
-{#                    {"name": "Exclusions", "default":  test_config['urls_exclusions'] | join(', '), "type": "List", "description": "Data"},#}
-{#                    {"name": "Scan location", "default": test_config['scan_location'], "type": "String", "description": "Data"},#}
-{#                ] + test_config['test_parameters'] %}#}
-{#                {% set params_names = ["URL to scan", "Exclusions", "Scan location"] %}#}
-{#                {% for i in test_config['test_parameters'] %}#}
-{#                    {{ params_names.append(i['name']) | default("", True) }}#}
-{#                {% endfor %}#}
-
                 {{ template_slot("params_table_content", payload={
                     "caption": "Test Parameters",
                     "default_params": test_config['test_parameters'],
@@ -60,7 +50,7 @@
                     "hidden_columns": []
                 }) | safe }}
 
-                {{ template_slot("integrations_security_create", payload=config) | safe }}
+                {{ template_slot("integrations_security_app_content") | safe }}
             </div>
         </div>
     </div>

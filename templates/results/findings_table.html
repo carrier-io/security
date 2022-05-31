@@ -1,91 +1,81 @@
-<div class="card card-12" id="findings">
-    <div class="card-header">
-        <div class="row">
-            <div class="col-2"><h3>Findings</h3></div>
-            <div class="col-10">
-                <div class="btn-toolbar justify-content-end" role="toolbar"
-                     aria-label="Toolbar with button groups">
-                    <div class="btn-group mr-1" role="group" aria-label="filters">
-                        {% for item in ['All', 'Valid', 'False positive', 'Ignored'] %}
-                            <button type="button" class="btn btn-secondary"
-                                    onclick="statusFilter(this.innerText)">{{ item }}</button>
+<Table-Card
+        @register="register"
+        instance_name="table_findings"
+
+        header='Findings'
+        :table_attributes="{
+            id: 'errors',
+            'data-detail-view': 'true',
+            'data-detail-view-icon': 'true',
+            'data-filter-control': 'true',
+            'data-detail-formatter': 'findingsDetail',
+            'data-page-size': 10
+        }"
+        container_classes="card-12"
+>
+    <template #actions>
+        <div class="btn-toolbar justify-content-end" role="toolbar"
+             aria-label="Toolbar with button groups">
+            <div class="btn-group mr-1" role="group" aria-label="filters">
+                {% for item in ['All', 'Valid', 'False positive', 'Ignored'] %}
+                    <button type="button" class="btn btn-secondary"
+                            onclick="statusFilter(this.innerText)">{{ item }}</button>
+                {% endfor %}
+            </div>
+            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-filter"></i>
+            </button>
+
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="bulkActionsBtn"
+                        data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                    Bulk actions
+                </button>
+                <div class="dropdown-menu" aria-labelledby="bulkActionsBtn" id="bulkActions">
+                    <a class="dropdown-item submenu" href="#">Change severity</a>
+                    <div class="dropdown-menu">
+                        {% for item in ['Critical', 'High', 'Medium', 'Low', 'Info'] %}
+                            <a class="dropdown-item" href="#"
+                               onclick="bulkModify('severity', this.text)">{{ item }}</a>
                         {% endfor %}
                     </div>
-                    <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-filter"></i>
-                    </button>
-
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="bulkActionsBtn"
-                                data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
-                            Bulk actions
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="bulkActionsBtn" id="bulkActions">
-                            <a class="dropdown-item submenu" href="#">Change severity</a>
-                            <div class="dropdown-menu">
-                                {% for item in ['Critical', 'High', 'Medium', 'Low', 'Info'] %}
-                                    <a class="dropdown-item" href="#"
-                                       onclick="bulkModify('severity', this.text)">{{ item }}</a>
-                                {% endfor %}
-                            </div>
-                            <a class="dropdown-item submenu" href="#">Change status</a>
-                            <div class="dropdown-menu">
-                                {% for item in ['Valid', 'False positive', 'Ignored'] %}
-                                    <a class="dropdown-item" href="#"
-                                       onclick="bulkModify('status', this.text)">{{ item }}</a>
-                                {% endfor %}
-                            </div>
-                        </div>
+                    <a class="dropdown-item submenu" href="#">Change status</a>
+                    <div class="dropdown-menu">
+                        {% for item in ['Valid', 'False positive', 'Ignored'] %}
+                            <a class="dropdown-item" href="#"
+                               onclick="bulkModify('status', this.text)">{{ item }}</a>
+                        {% endfor %}
                     </div>
-
-                    <button type="button" class="btn btn-32 btn-secondary" onclick="renderTableFindings()"><i
-                            class="fas fa-sync"></i></button>
                 </div>
             </div>
+
+            <button type="button" class="btn btn-32 btn-secondary" onclick="renderTableFindings()"><i
+                    class="fas fa-sync"></i></button>
         </div>
-    </div>
-    <div class="card-body card-table">
-        <table class="table table-borderless"
-               data-toggle="table"
-               id="errors"
-               data-unique-id="id"
-
-               data-detail-view="true"
-               data-detail-view-icon="true"
-               data-filter-control="true"
-               data-detail-formatter="findingsDetail"
-
-               data-pagination-parts='["pageInfoShort", "pageList"]'
-               data-pagination="true"
-               data-page-size=10
+    </template>
+    <template #table_headers>
+        <th data-checkbox="true"></th>
+        <th scope="col" data-sortable="true" data-field="tool_name"
+            data-width="150" data-width-unit="px"
         >
-            <thead class="thead-light">
-            <tr>
-                <th data-checkbox="true"></th>
-                <th scope="col" data-sortable="true" data-field="tool_name"
-                    data-width="150" data-width-unit="px"
-                >
-                    Scanner
-                </th>
-                <th scope="col" data-sortable="true" data-field="description">
-                    Description
-                </th>
-                <th scope="col" data-sortable="true" data-field="severity" data-align="center"
-                    data-width="150" data-width-unit="px"
-                    data-formatter=tableSeverityButtonFormatter
-                >
-                    Severity
-                </th>
-                <th scope="col" data-sortable="true" data-field="status" data-align="center"
-                    data-width="150" data-width-unit="px"
-                    data-formatter=tableStatusButtonFormatter
-                >
-                    Status
-                </th>
+            Scanner
+        </th>
+        <th scope="col" data-sortable="true" data-field="description">
+            Description
+        </th>
+        <th scope="col" data-sortable="true" data-field="severity" data-align="center"
+            data-width="150" data-width-unit="px"
+            data-formatter=tableSeverityButtonFormatter
+        >
+            Severity
+        </th>
+        <th scope="col" data-sortable="true" data-field="status" data-align="center"
+            data-width="150" data-width-unit="px"
+            data-formatter=tableStatusButtonFormatter
+        >
+            Status
+        </th>
+    </template>
+</Table-Card>
 
-            </tr>
-            </thead>
-        </table>
-    </div>
 
-</div>
