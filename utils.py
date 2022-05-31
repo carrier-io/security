@@ -12,18 +12,18 @@ from tools import rpc_tools, task_tools
 
 
 def run_test(test: SecurityTestsDAST, config_only=False) -> dict:
-    security_results = SecurityResultsDAST(
+    results = SecurityResultsDAST(
         project_id=test.project_id,
         test_id=test.id,
         test_uid=test.test_uid,
         test_name=test.name
     )
-    security_results.insert()
+    results.insert()
 
-    event = []
-    test.results_test_id = security_results.id
+    test.results_test_id = results.id
     test.commit()
-    event.append(test.configure_execution_json("cc"))
+
+    event = [test.configure_execution_json("cc")]
 
     if config_only:
         return event[0]
@@ -31,9 +31,9 @@ def run_test(test: SecurityTestsDAST, config_only=False) -> dict:
     resp = task_tools.run_task(test.project_id, event)
     resp['redirect'] = f'/task/{resp["task_id"]}/results'  # todo: where this should lead to?
 
-    rpc_tools.RpcMixin().rpc.call.increment_statistics(test.project_id, 'dast_scans')
+    test.rpc.call.increment_statistics(test.project_id, 'dast_scans')
 
-    resp['result_id'] = security_results.id
+    resp['result_id'] = results.id
     return resp
 
 

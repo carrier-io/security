@@ -28,7 +28,7 @@
             {{ template_slot("alert_bar", payload={
                 "alert_container_id": "alertCreateTest",
                 "max_alerts": 2,
-                "overlay_max_width": "1010px"
+                "overlay_max_width": "1100px"
             }) | safe }}
 
 
@@ -57,9 +57,9 @@
                 {{ template_slot("params_table_content", payload={
                     "caption": "Test Parameters",
                     "default_params": [
-                        {"name": "URL to scan", "default": "", "type": "URLs", "description": "Data"},
-                        {"name": "Exclusions", "default": "", "type": "List", "description": "Data"},
-                        {"name": "Scan location", "default": "Carrier default config", "type": "Item", "description": "Data"},
+                        {"name": "URL to scan", "default": "", "type": "List[URL]", "description": "Data"},
+                        {"name": "Exclusions", "default": "", "type": "List[URL]", "description": "Data"},
+                        {"name": "Scan location", "default": "Carrier default config", "type": "String", "description": "Data"},
                     ],
                     "disabled_names": ("URL to scan", "Exclusions", "Scan location"),
                     "modal_id": "security",
@@ -67,8 +67,8 @@
                 }) | safe }}
 
                 {{ template_slot("integrations_security_app_content") | safe }}
-{##}
-{#                {{ template_slot("security_scheduling_test_create", payload=config) | safe }}#}
+
+                {{ template_slot("security_scheduling_test_create_content") | safe }}
 
             </div>
         </div>

@@ -1,13 +1,6 @@
 var tableFormatters = {
     reports_test_name_button(value, row, index) {
-        // const searchParams = new URLSearchParams(location.search);
-        // searchParams.set('module', 'Result');
-        // searchParams.set('page', 'list');
-        // searchParams.set('project_id', getSelectedProjectId());
-        // searchParams.set('result_test_id', row.id);
-        // searchParams.set('test_id', row.test_id);
-        // return `<a class="test form-control-label" href="?${searchParams.toString()}" role="button">${row.name}</a>`
-        return `<a class="test form-control-label" href="./results?result_id=${row.id}" role="button">${row.name}</a>`
+        return `<a href="./results?result_id=${row.id}" role="button">${row.name}</a>`
     },
     reports_status_formatter(value, row, index) {
         switch (value.toLowerCase()) {
@@ -31,23 +24,46 @@ var tableFormatters = {
     tests_actions(value, row, index) {
         return `
             <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-24 btn-action run"><i class="fas fa-play"></i></button>
-                <div class="dropdown action-menu">
-                    <button type="button" class="btn btn-24 btn-action" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button type="button" class="btn btn-24 btn-action" id="test_run"><i class="fas fa-play"></i></button>
+                <div class="dropdown_multilevel">
+                    <button class="btn btn-24 btn-action" type="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
-                    <div class="dropdown-menu bulkActions" aria-labelledby="bulkActionsBtn">
-                        <a class="dropdown-item submenu" href="#"><i class="fas fa-share-alt fa-secondary fa-xs"></i> Integrate with</a>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#" onclick="console.log('Docker command')">Docker command</a>
-                            <a class="dropdown-item" href="#" onclick="console.log('Jenkins stage')">Jenkins stage</a>
-                            <a class="dropdown-item" href="#" onclick="console.log('Azure DevOps yaml')">Azure DevOps yaml</a>
-                            <a class="dropdown-item" href="#" onclick="console.log('Test UID')">Test UID</a>
-                        </div>
-                        <a class="dropdown-item settings" href="#"><i class="fas fa-cog fa-secondary fa-xs"></i> Settings</a>
-                        <a class="dropdown-item trash" href="#"><i class="fas fa-trash-alt fa-secondary fa-xs"></i> Delete</a>
-                    </div>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
+                            <span class="w-100 font-h5"><i class="fas fa-share-alt mr-2"></i>Integrate with</span>
+                            <i class="fa fa-sort-down"
+                               style="transform: rotate(270deg)"
+                            ></i>
+                            <ul class="submenu dropdown-menu">
+                                <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
+                                    <span class="w-100 font-h5">Docker command</span>
+                                </li>
+                                <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
+                                    <span class="w-100 font-h5">Jenkins stage</span>
+                                </li>
+                                <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
+                                    <span class="w-100 font-h5">Azure DevOps yaml</span>
+                                </li>
+                                <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
+                                    <span class="w-100 font-h5">Test UID</span>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
+                            id="test_settings"
+                        >
+                            <i class="fas fa-cog mr-2"></i><span class="w-100 font-h5">Settings</span>
+                        </li>
+                        <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
+                            id="test_delete"
+                        >
+                            <i class="fas fa-trash-alt mr-2"></i><span class="w-100 font-h5">Delete</span>
+                        </li>
+                    </ul>
                 </div>
+                
             </div>
         `
     },
@@ -55,12 +71,26 @@ var tableFormatters = {
         // todo: fix
         return Object.keys(value?.scanners || {})
     },
+    application_urls(value, row, index) {
+        const enable_tooltip = JSON.stringify(value).length > 42  // because 42
+        return `<div 
+                    style="
+                        max-width: 240px;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        overflow: hidden;
+                    "
+                    ${enable_tooltip && 'data-toggle="infotip"'}
+                    data-placement="top" 
+                    title='${value}'
+                >${value}</div>`
+    },
     status_events: {
-        "click .run": function (e, value, row, index) {
+        "click #test_run": function (e, value, row, index) {
             apiActions.run(row.id, row.name)
         },
 
-        "click .settings": function (e, value, row, index) {
+        "click #test_settings": function (e, value, row, index) {
             securityModal.setData(row)
             securityModal.container.modal('show')
             $('#modal_title').text('Edit Application Test')
@@ -69,7 +99,7 @@ var tableFormatters = {
 
         },
 
-        "click .trash": function (e, value, row, index) {
+        "click #test_delete": function (e, value, row, index) {
             apiActions.delete(row.id)
         }
     }
@@ -137,8 +167,8 @@ var apiActions = {
         alertCreateTest?.clear()
     },
     afterSave: () => {
-        $("#tests-list").bootstrapTable('refresh')
-        $("#results-list").bootstrapTable('refresh')
+        $("#application_tests_table").bootstrapTable('refresh')
+        $("#results_table").bootstrapTable('refresh')
         $("#security_test_save").removeClass("disabled updating")
         $("#security_test_save_and_run").removeClass("disabled updating")
     },
@@ -155,4 +185,5 @@ $(document).on('vue_init', () => {
         ).join(',')
         ids_to_delete && apiActions.delete(ids_to_delete)
     })
+    $("#application_tests_table").on('all.bs.table', initTooltips)
 })
