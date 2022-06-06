@@ -1,12 +1,12 @@
 // page_params = new URLSearchParams(window.location.search);
 
-let urlParamsFindings = '';
+// let urlParamsFindings = '';
 // const getTableUrlFindings = () => `/api/v1/security/findings/${page_params.get('project_id')}/${page_params.get('result_test_id')}/${urlParamsFindings}`
 
-const getTableUrlFindings = () => {
-    const result_test_id = new URLSearchParams(location.search).get('result_id')
-    return `/api/v1/security/findings/${getSelectedProjectId()}/${result_test_id}/${urlParamsFindings}`
-}
+// const getTableUrlFindings = () => {
+//     const result_test_id = new URLSearchParams(location.search).get('result_id')
+//     return `/api/v1/security/findings/${getSelectedProjectId()}/${result_test_id}/${urlParamsFindings}`
+// }
 
 // const severityOptions = [
 //     {name: 'critical', className: 'colored-select-red'},
@@ -52,21 +52,21 @@ $(document).ready(function () {
         url: `/api/v1/security/${page_params.get('project_id')}/findings/${page_params.get('test_id')}`,
 */
 
-const onSelectChange = (fieldName, value, issueHashes) => {
-    const data = {
-        [fieldName]: value,
-        issue_hashes: issueHashes
-    }
-    fetch(getTableUrlFindings(), {
-        method: 'PUT',
-        body: JSON.stringify(data),
-        headers: {'Content-Type': 'application/json'}
-    }).then(response => {
-        // console.log(response);
-        renderTableFindings();
-        $( document ).trigger( 'updateSummaryEvent' );
-    })
-}
+// const onSelectChange = (fieldName, value, issueHashes) => {
+//     const data = {
+//         [fieldName]: value,
+//         issue_hashes: issueHashes
+//     }
+//     fetch(getTableUrlFindings(), {
+//         method: 'PUT',
+//         body: JSON.stringify(data),
+//         headers: {'Content-Type': 'application/json'}
+//     }).then(response => {
+//         // console.log(response);
+//         renderTableFindings();
+//         $(document).trigger('updateSummaryEvent');
+//     })
+// }
 
 // const tableColoredSelectFormatter = (value, row, index, optionsList, fieldName) => {
 //     const options = optionsList.map(item => `
@@ -91,12 +91,59 @@ const onSelectChange = (fieldName, value, issueHashes) => {
 //     `
 // }
 
-
-function renderTableFindings() {
-    $("#errors").bootstrapTable('refresh', {
-        url: getTableUrlFindings(),
-    })
+const ColoredSelect = {
+    delimiters: ['[[', ']]'],
+    props: ['url', 'optionsList'],
+    emits: ['rerender'],
+    data() {
+        return {
+            value: undefined,
+            options: [],
+        }
+    },
+    // template: `
+    //     <select
+    //         class="selectpicker btn-colored-select"
+    //         data-style="btn-colored"
+    //         onchange="onSelectChange('${fieldName}', this.value, ['${row['issue_hash']}'])"
+    //         v-model="value"
+    //     >
+    //         <option
+    //             v-for="o in optionsList"
+    //
+    //             class="${item.className}"
+    //             ${compareValues(item.name, value) ? 'selected' : ''}
+    //         >
+    //             ${item.name}
+    //         </option>
+    //     </select>
+    // `,
+    methods: {
+        onSelectChange(fieldName, value, issueHashes) {
+            const data = {
+                [fieldName]: value,
+                issue_hashes: issueHashes
+            }
+            fetch(this.url, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+                headers: {'Content-Type': 'application/json'}
+            }).then(response => {
+                // console.log(response);
+                // renderTableFindings();
+                this.$emit('rerender')
+                // $(document).trigger('updateSummaryEvent');
+            })
+        }
+    }
 }
+
+
+// function renderTableFindings() {
+//     $("#errors").bootstrapTable('refresh', {
+//         url: getTableUrlFindings(),
+//     })
+// }
 
 const bulkModify = (dataType, value) => {
     const issueHashes = $('#errors').bootstrapTable('getSelections').map(item => item.issue_hash)
@@ -113,7 +160,7 @@ const bulkModify = (dataType, value) => {
         }).then(response => {
             // console.log(response);
             renderTableFindings();
-            $( document ).trigger( 'updateSummaryEvent' );
+            $(document).trigger('updateSummaryEvent');
         })
     }
 }
@@ -134,10 +181,6 @@ const statusFilter = value => {
 }
 
 function findingsDetail(index, row) {
-    return _findingsDetail(index, row)
-}
-
-const _findingsDetail = (index, row) => {
     return `
         <div class="col ml-3">
             <div class="details_view">
@@ -147,10 +190,67 @@ const _findingsDetail = (index, row) => {
     `
 }
 
-$(document).on('vue_init', () => {
-    $('#errors').on('all.bs.table', function (e) {
-        $('.selectpicker').selectpicker('render')
-        initColoredSelect()
-    })
-    renderTableFindings()
-})
+const StatusFilterButton = {
+    methods: {}
+}
+
+// $(document).on('vue_init', () => {
+//     $('#errors').on('all.bs.table', function (e) {
+//         $('.selectpicker').selectpicker('render')
+//         initColoredSelect()
+//     })
+//     $(renderTableFindings)
+// })
+
+
+const TableCardFindings = {
+    ...TableCard,
+    mounted() {
+        console.log('TableCardFindings props', this.$props)
+        console.log('TableCardFindings refs', this.$refs)
+        // this.$refs.table
+
+        this.url = this.table_url_base
+
+        $(() => {
+            $(this.$refs.table).on('all.bs.table', function (e) {
+                $('.selectpicker').selectpicker('render')
+                initColoredSelect()
+            })
+            this.rerender()
+        })
+
+    },
+    data() {
+        return {
+            ...TableCard.data(),
+            url: undefined
+        }
+    },
+    methods: {
+        ...TableCard.methods,
+        rerender() {
+            this.table_action('refresh', {
+                url: this.table_url,
+            })
+        },
+        clear_search_params() {
+            this.url.searchParams.forEach((v, k) => this.url.searchParams.delete(k))
+        },
+    },
+    computed: {
+        ...TableCard.computed,
+        table_url_base() {
+            const result_test_id = new URLSearchParams(location.search).get('result_id')
+            let url = new URL(`/api/v1/security/findings/${getSelectedProjectId()}/${result_test_id}/`, location.origin)
+            return url
+        },
+        table_url() {
+            return this.url.href
+        },
+
+    }
+
+}
+
+register_component('TableCardFindings', TableCardFindings)

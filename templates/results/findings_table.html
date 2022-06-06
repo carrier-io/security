@@ -1,4 +1,4 @@
-<Table-Card
+<Table-Card-Findings
         @register="register"
         instance_name="table_findings"
 
@@ -14,8 +14,7 @@
         container_classes="card-12"
 >
     <template #actions>
-        <div class="btn-toolbar justify-content-end" role="toolbar"
-             aria-label="Toolbar with button groups">
+        <div class="btn-toolbar justify-content-end" role="toolbar" aria-label="">
             <div class="btn-group mr-1" role="group" aria-label="filters">
                 {% for item in ['All', 'Valid', 'False positive', 'Ignored'] %}
                     <button type="button" class="btn btn-secondary"
@@ -76,6 +75,6 @@
             Status
         </th>
     </template>
-</Table-Card>
+</Table-Card-Findings>
 
 

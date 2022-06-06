@@ -15,14 +15,15 @@ function renderTableArtifacts() {
     })
 }
 
-function artifactActionsFormatter(value, row, index) {return _artifactActionsFormatter(value, row, index)}
-
-const _artifactActionsFormatter = (value, row, index) => {
-    return `<a href="${getTableUrlDownloadArtifacts()}/${row['name']}" class="fa fa-download btn-action" download="${row['name']}"></a>`
+function artifactActionsFormatter(value, row, index) {
+    return `
+        <a 
+            href="${getTableUrlDownloadArtifacts()}/${row['name']}" 
+            class="fa fa-download btn-action" 
+            download="${row['name']}"
+        ></a>
+    `
 }
 
-// $.when( $.ready ).then(function() {
-//   renderTableArtifacts()
-// });
 
-$(document).on('vue_init', () => renderTableArtifacts())
+$(document).on('vue_init', () => $(renderTableArtifacts()))
