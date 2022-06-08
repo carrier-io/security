@@ -13,7 +13,6 @@ const LogsApp = {
 
     },
     mounted() {
-      console.log("Logs: mounted()")
       this.websocket_api_url = `/api/v1/security/loki_url/${this.project_id}/?task_id=${this.test_id}&result_test_id=${this.result_test_id}`
       this.init_websocket()
     },
@@ -46,7 +45,6 @@ const LogsApp = {
     `,
     methods: {
         init_websocket() {
-            console.log("Logs: init_websocket()")
             fetch(this.websocket_api_url, {
                 method: 'GET'
             }).then(response => {
@@ -68,7 +66,7 @@ const LogsApp = {
         },
         on_websocket_message(message) {
             if (message.type !== 'message') {
-                console.log('Unknown message', message)
+                console.warn('Unknown message from socket', message)
                 return
             }
 
