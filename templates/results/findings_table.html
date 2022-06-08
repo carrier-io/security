@@ -1,3 +1,7 @@
+{% set statuses = ['valid', 'false positive', 'ignored'] %}
+{% set severities = ['critical', 'high', 'medium', 'low', 'info'] %}
+
+
 <Table-Card-Findings
         @register="register"
         instance_name="table_findings"
@@ -8,48 +12,87 @@
             'data-detail-view': 'true',
             'data-detail-view-icon': 'true',
             'data-filter-control': 'true',
-            'data-detail-formatter': 'findingsDetail',
+            'data-detail-formatter': 'findings_formatter_details',
             'data-page-size': 10
         }"
         container_classes="card-12"
 >
-    <template #actions>
-        <div class="btn-toolbar justify-content-end" role="toolbar" aria-label="">
-            <div class="btn-group mr-1" role="group" aria-label="filters">
-                {% for item in ['All', 'Valid', 'False positive', 'Ignored'] %}
-                    <button type="button" class="btn btn-secondary"
-                            onclick="statusFilter(this.innerText)">{{ item }}</button>
+    <template #actions="{master}">
+        <modal-save-filter
+                v-if="master.showModal"
+                @save-filter-as="master.saveFilterAs"
+                @open-modal="master.openModal"
+                @save-new-filter="master.saveNewFilter"
+                :loading="master.loadingSaveAs"
+        ></modal-save-filter>
+        <div class="d-flex justify-content-end pb-4">
+            <ul class="custom-tabs nav nav-pills mr-3 align-content-center"
+                role="tablist"
+            >
+                {% for item in ['all', 'valid', 'false positive', 'ignored'] %}
+                    <li class="nav-item" role="presentation">
+                        <a
+                                class="text-uppercase {% if item == 'all' %}active{% endif %}"
+                                data-toggle="pill"
+                                href="#"
+                                role="tab"
+                                aria-controls="pills-filter"
+                                aria-selected="true"
+                                @click="master.handle_status_filter($event.target.innerText)"
+                        >
+                            {{ item }}
+                        </a>
+                    </li>
                 {% endfor %}
-            </div>
-            <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-filter"></i>
-            </button>
+            </ul>
+            <choose-filter
+                    :filters="master.filters"
+                    :loading-filters="master.loadingFilters"
+                    :loading-delete="master.loadingDelete"
+                    @select-filter="master.selectFilter"
+                    @create-filter="master.createFilter"
+                    @delete-filter="master.deleteFilter"
+            ></choose-filter>
 
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="bulkActionsBtn"
-                        data-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false">
-                    Bulk actions
+
+            <div class="dropdown_multilevel mr-2">
+                <button class="btn btn-secondary dropdown-toggle font-weight-400" type="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Bulk Actions
                 </button>
-                <div class="dropdown-menu" aria-labelledby="bulkActionsBtn" id="bulkActions">
-                    <a class="dropdown-item submenu" href="#">Change severity</a>
-                    <div class="dropdown-menu">
-                        {% for item in ['Critical', 'High', 'Medium', 'Low', 'Info'] %}
-                            <a class="dropdown-item" href="#"
-                               onclick="bulkModify('severity', this.text)">{{ item }}</a>
-                        {% endfor %}
-                    </div>
-                    <a class="dropdown-item submenu" href="#">Change status</a>
-                    <div class="dropdown-menu">
-                        {% for item in ['Valid', 'False positive', 'Ignored'] %}
-                            <a class="dropdown-item" href="#"
-                               onclick="bulkModify('status', this.text)">{{ item }}</a>
-                        {% endfor %}
-                    </div>
-                </div>
+                <ul class="dropdown-menu">
+                    <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
+                        <span class="w-100">Severity</span>
+                        <i class="fa fa-sort-down" style="transform: rotate(270deg)"></i>
+                        <ul class="submenu dropdown-menu">
+                            {% for item in severities %}
+                                <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
+                                    @click="master.bulkModify('severity', '{{ item }}')"
+                                >
+                                    <span class="w-100">{{ item }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
+                        <span class="w-100">Status</span>
+                        <i class="fa fa-sort-down" style="transform: rotate(270deg)"></i>
+                        <ul class="submenu dropdown-menu">
+                            {% for item in statuses %}
+                                <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
+                                    @click="master.bulkModify('status', '{{ item }}')"
+                                >
+                                    <span class="w-100">{{ item }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                </ul>
             </div>
 
-            <button type="button" class="btn btn-32 btn-secondary" onclick="renderTableFindings()"><i
-                    class="fas fa-sync"></i></button>
+            <button type="button" class="btn btn-32 btn-secondary"
+                    @click="master.rerender()"
+            ><i class="fas fa-sync"></i></button>
         </div>
     </template>
     <template #table_headers>
@@ -64,13 +107,15 @@
         </th>
         <th scope="col" data-sortable="true" data-field="severity" data-align="center"
             data-width="150" data-width-unit="px"
-            data-formatter=tableSeverityButtonFormatter
+                            data-formatter='findings_formatter_severity'
+                            data-events="findings_eventhandler"
         >
             Severity
         </th>
         <th scope="col" data-sortable="true" data-field="status" data-align="center"
             data-width="150" data-width-unit="px"
-            data-formatter=tableStatusButtonFormatter
+                data-formatter='findings_formatter_status'
+                data-events="findings_eventhandler"
         >
             Status
         </th>
