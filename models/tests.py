@@ -115,8 +115,19 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             # if "toolreports" in self.reporting:
             #     global_dast_settings["save_intermediates_to"] = "/tmp/intermediates"
 
-            scanners_config = dict()
+            # Thresholds
+            tholds = {}
+            if thresholds and any(int(thresholds[key]) > -1 for key in thresholds.keys()):
 
+                for key, value in thresholds.items():
+                    if int(value) > -1:
+                        tholds[key.capitalize()] = int(value)
+
+            #
+            # Scanners
+            #
+
+            scanners_config = dict()
             for scanner_name in self.integrations.get('scanners', []):
                 try:
                     config_name, config_data = \
@@ -144,6 +155,62 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             #             scanners_data[setting],
             #             scanners_data[setting]
             #         )
+
+            #
+            # Processing
+            #
+
+            processing_config = dict()
+            for processor_name in self.integrations.get("processing", []):
+                try:
+                    config_name, config_data = \
+                        self.rpc.call_function_with_timeout(
+                            func=f"dusty_config_{processor_name}",
+                            timeout=2,
+                            context=None,
+                            test_params=self.__dict__,
+                            scanner_params=self.integrations["processing"][processor_name],
+                        )
+                    processing_config[config_name] = config_data
+                except Empty:
+                    log.warning(f'Cannot find processor config rpc for {processor_name}')
+
+            processing_config["quality_gate"] = {
+                "thresholds": tholds
+            }
+
+            # "min_severity_filter": {
+            #     "severity": "Info"
+            # },
+            # "quality_gate": {
+            #     "thresholds": tholds
+            # },
+            # # "false_positive": {
+            # #     "galloper": secrets_tools.unsecret(
+            # #         "{{secret.galloper_url}}",
+            # #         project_id=self.project_id
+            # #     ),
+            # #     "project_id": f"{self.project_id}",
+            # #     "token": secrets_tools.unsecret(
+            # #         "{{secret.auth_token}}",
+            # #         project_id=self.project_id
+            # #     )
+            # # },
+            # # "ignore_finding": {
+            # #     "galloper": secrets_tools.unsecret(
+            # #         "{{secret.galloper_url}}",
+            # #         project_id=self.project_id
+            # #     ),
+            # #     "project_id": f"{self.project_id}",
+            # #     "token": secrets_tools.unsecret(
+            # #         "{{secret.auth_token}}",
+            # #         project_id=self.project_id
+            # #     )
+            # # }
+
+            #
+            # Reporters
+            #
 
             reporters_config = dict()
             for reporter_name in self.integrations.get('reporters', []):
@@ -262,13 +329,6 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             #                 "rp_project_name": rp["rp_project"],
             #                 "rp_launch_name": "dast"
             #             }
-            # Thresholds
-            tholds = {}
-            if thresholds and any(int(thresholds[key]) > -1 for key in thresholds.keys()):
-
-                for key, value in thresholds.items():
-                    if int(value) > -1:
-                        tholds[key.capitalize()] = int(value)
 
             dusty_config = {
                 "config_version": 2,
@@ -302,36 +362,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                             #     },
                             # },
                         },
-                        "processing": {
-                            "min_severity_filter": {
-                                "severity": "Info"
-                            },
-                            "quality_gate": {
-                                "thresholds": tholds
-                            },
-                            # "false_positive": {
-                            #     "galloper": secrets_tools.unsecret(
-                            #         "{{secret.galloper_url}}",
-                            #         project_id=self.project_id
-                            #     ),
-                            #     "project_id": f"{self.project_id}",
-                            #     "token": secrets_tools.unsecret(
-                            #         "{{secret.auth_token}}",
-                            #         project_id=self.project_id
-                            #     )
-                            # },
-                            # "ignore_finding": {
-                            #     "galloper": secrets_tools.unsecret(
-                            #         "{{secret.galloper_url}}",
-                            #         project_id=self.project_id
-                            #     ),
-                            #     "project_id": f"{self.project_id}",
-                            #     "token": secrets_tools.unsecret(
-                            #         "{{secret.auth_token}}",
-                            #         project_id=self.project_id
-                            #     )
-                            # }
-                        },
+                        "processing": processing_config,
                         "reporters": reporters_config
                     }
                 }
