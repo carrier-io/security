@@ -45,7 +45,7 @@ class SecurityModal {
         this.registerDataProvider(new SectionDataProvider('test_parameters', {
             get: () => $('#security_test_params').bootstrapTable('getData'),
             set: (urls_to_scan, urls_exclusions, scan_location, test_parameters = []) => {
-                console.log('SET PARAMETERS', urls_to_scan, urls_exclusions, scan_location, test_parameters)
+                console.debug('SET test_parameters', urls_to_scan, urls_exclusions, scan_location, test_parameters)
                 const table_data = [
                     {
                         default: urls_to_scan.join(','),
@@ -79,7 +79,7 @@ class SecurityModal {
                 $('#security_test_params').bootstrapTable('load', table_data)
             },
             clear: () => {
-                console.log('CLEARING TEST PARAMS TABLE')
+                console.debug('CLEAR test_parameters')
                 const table_data = [
                     {
                         default: '',
@@ -112,7 +112,7 @@ class SecurityModal {
                 $('#security_test_params').bootstrapTable('load', table_data)
             },
             setError: data => {
-                console.log('tp set error', data)
+                console.debug('SET error test_parameters', data)
                 const get_col_by_name = name => $(`#security_test_params thead th[data-field=${name}]`).index()
                 const [_, row, col_name] = data.loc
                 $(`#security_test_params tr[data-index=${row}] td:nth-child(${get_col_by_name(col_name) + 1}) input`)
@@ -132,13 +132,12 @@ class SecurityModal {
     refreshContainer = () => {
         this.container = $(`#${this.containerId}`)
         this.container.on('hide.bs.modal', this.clear)
-        this.container.on('hide.bs.modal', () => console.log('CLOSED'))
     }
 
     registerDataProvider = provider => this.dataModel[provider.name] = provider
 
     setData = data => {
-        console.log('setModalData', data)
+        console.debug('SecurityModal SET data', data)
         const {
             urls_to_scan, urls_exclusions, scan_location, test_parameters,
             test_uid,

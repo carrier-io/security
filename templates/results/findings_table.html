@@ -18,13 +18,6 @@
         container_classes="card-12"
 >
     <template #actions="{master}">
-        <modal-save-filter
-                v-if="master.showModal"
-                @save-filter-as="master.saveFilterAs"
-                @open-modal="master.openModal"
-                @save-new-filter="master.saveNewFilter"
-                :loading="master.loadingSaveAs"
-        ></modal-save-filter>
         <div class="d-flex justify-content-end pb-4">
             <ul class="custom-tabs nav nav-pills mr-3 align-content-center"
                 role="tablist"
@@ -45,15 +38,6 @@
                     </li>
                 {% endfor %}
             </ul>
-            <choose-filter
-                    :filters="master.filters"
-                    :loading-filters="master.loadingFilters"
-                    :loading-delete="master.loadingDelete"
-                    @select-filter="master.selectFilter"
-                    @create-filter="master.createFilter"
-                    @delete-filter="master.deleteFilter"
-            ></choose-filter>
-
 
             <div class="dropdown_multilevel mr-2">
                 <button class="btn btn-secondary dropdown-toggle font-weight-400" type="button"

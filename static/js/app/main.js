@@ -108,7 +108,6 @@ var tableFormatters = {
 var apiActions = {
     base_url: api_name => `/api/v1/security/${api_name}/${getSelectedProjectId()}`,
     run: (id, name) => {
-        console.log('Run test', id)
         fetch(`${apiActions.base_url('test')}/${id}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -117,7 +116,6 @@ var apiActions = {
     },
     delete: ids => {
         const url = `${apiActions.base_url('tests')}?` + $.param({"id[]": ids})
-        console.log('Delete test with id', ids, url);
         fetch(url, {
             method: 'DELETE'
         }).then(response => response.ok && apiActions.afterSave())
@@ -179,7 +177,6 @@ var apiActions = {
 
 $(document).on('vue_init', () => {
     $('#delete_test').on('click', e => {
-        console.log('e', $(e.target).closest('.card').find('table.table'))
         const ids_to_delete = $(e.target).closest('.card').find('table.table').bootstrapTable('getSelections').map(
             item => item.id
         ).join(',')

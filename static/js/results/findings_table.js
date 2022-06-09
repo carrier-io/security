@@ -13,92 +13,10 @@ const statusOptions = [
     {name: 'not defined', className: 'colored-select-notdefined'},
 ]
 
-// const ColoredSelect = {
-//     delimiters: ['[[', ']]'],
-//     props: ['variant', 'initial_value'],
-//     // emits: ['update:modelValue'],
-//     data() {
-//         return {
-//             value: undefined,
-//             options: [],
-//         }
-//     },
-//     mounted() {
-//         this.value = this.initial_value.toLowerCase()
-//         switch (this.variant.toLowerCase()) {
-//             case 'severity':
-//                 this.options = Array.from(severityOptions)
-//                 if (~this.options.find(({name}) => name === this.value)) {
-//                     console.log('adding new option', this.value)
-//                     this.options.push({name: this.value, className: ''})
-//                 }
-//                 break
-//             case 'status':
-//                 this.options = statusOptions
-//                 if (~this.options.find(({name}) => name === this.value)) {
-//                     console.log('adding new option', this.value)
-//                     this.options.push({name: this.value, className: ''})
-//                 }
-//                 break
-//             default:
-//                 console.warn('Unhandled variant for ColoredSelect: ', this.variant.toLowerCase())
-//                 return [{name: this.value, className: ''}]
-//         }
-//         console.log('cs opts', this.options)
-//
-//     },
-//     template: `
-//         <select
-//             class="selectpicker btn-colored-select mr-2 btn-colored-table"
-//             data-style="btn-colored"
-//             v-model="value"
-//         >
-//             <option
-//                 v-for="(item, index) in options"
-//                 :class="get_classname(item.name)"
-//                 :value="item.name"
-//                 :key="index"
-//                 style="text-transform: capitalize"
-//             >
-//                 [[ item.name ]]
-//             </option>
-//         </select>
-//     `,
-//     methods: {
-//         // onSelectChange(fieldName, value, issueHashes) {
-//         //     const data = {
-//         //         [fieldName]: value,
-//         //         issue_hashes: issueHashes
-//         //     }
-//         //     fetch(this.url, {
-//         //         method: 'PUT',
-//         //         body: JSON.stringify(data),
-//         //         headers: {'Content-Type': 'application/json'}
-//         //     }).then(response => {
-//         //         // console.log(response);
-//         //         // renderTableFindings();
-//         //         this.$emit('rerender')
-//         //         // $(document).trigger('updateSummaryEvent');
-//         //     })
-//         // }
-//         get_classname(opt) {
-//             const res = this.options.find(({name}) => name === opt)?.className || ''
-//             console.log('gettings class for opt', opt, 'res is:', res)
-//             return res
-//         }
-//     }
-// }
-//
-// register_component('ColoredSelect', ColoredSelect)
-
 
 const TableCardFindings = {
     ...TableCard,
     mounted() {
-        console.log('TableCardFindings props', this.$props)
-        console.log('TableCardFindings refs', this.$refs)
-        // this.$refs.table
-
         this.url = this.table_url_base
 
         $(() => {
@@ -110,16 +28,8 @@ const TableCardFindings = {
         })
 
         this.register_formatters()
-
-        this.fetchFilters()
-        // this.initTable()
-
+        console.debug('TableCardFindings mounted', {refs: this.$refs, props: this.$props})
     },
-    // components: {
-    //     'report-filter': ReportFilter,
-    //     'choose-filter': ChooseFilter,
-    //     'modal-save-filter': modalSaveFilter,
-    // },
     data() {
         return {
             ...TableCard.data(),
@@ -153,9 +63,9 @@ const TableCardFindings = {
         clear_search_params() {
             this.url.searchParams.forEach((v, k) => this.url.searchParams.delete(k))
         },
-        ping(some_v) {
-            console.log('ping', some_v)
-        },
+        // ping(some_v) {
+        //     console.log('ping', some_v)
+        // },
         handle_status_filter(status) {
             this.clear_search_params()
             this.url.searchParams.set('status', this.status_map[status.toLowerCase()] || '')
@@ -242,111 +152,6 @@ const TableCardFindings = {
                 this.handleModify(data)
             }
         },
-        // initTable() {
-        //     const tableOptions = {
-        //         columns: tableColumns,
-        //         data: this.tableData,
-        //         theadClasses: 'thead-light'
-        //     }
-        //     $('#table').bootstrapTable(tableOptions)
-        // },
-        fetchFilters() {
-            // this.loadingFilters = true;
-            // apiFetchFilters.then(res => {
-            //     this.filters = res;
-            // }).finally(() => {
-            //     this.loadingFilters = false;
-            // })
-        },
-        // updateTable(filterSetting) {
-        //     this.loadingApply = true;
-        //     $('#table').bootstrapTable('destroy');
-        //     setTimeout(() => {
-        //         console.log('SETTING FOR SERVER:', filterSetting.options)
-        //         apiFetchTable.then(response => {
-        //             const {columns, data} = response;
-        //             const tableOptions = {
-        //                 columns,
-        //                 data,
-        //                 theadClasses: 'thead-light'
-        //             }
-        //             $('#table').bootstrapTable(tableOptions);
-        //             $('.selectpicker').selectpicker('render');
-        //         }).finally(() => {
-        //             this.loadingApply = false;
-        //         })
-        //     }, 500)
-        // },
-        createFilter() {
-            this.selectedFilter = {
-                id: null,
-                title: '',
-                options: [
-                    {
-                        id: Math.round(Math.random() * 1000),
-                        column: '',
-                        operator: '',
-                        title: '',
-                    }
-                ]
-            }
-        },
-        selectFilter(filter) {
-            this.selectedFilter = filter;
-        },
-        setFilters(filters) {
-            this.filtersName = filters.map(filter => filter.title);
-        },
-        openModal() {
-            this.showModal = !this.showModal;
-        },
-        saveFilterAs(createdFilter) {
-            this.filters.push(createdFilter);
-            this.openModal();
-        },
-        saveFilter(currentFilter) {
-            // this.loadingSave = true;
-            // setTimeout(() => {
-            //     apiSaveFilter(currentFilter).then(response => {
-            //         this.selectFilter(response.data);
-            //         showNotify('SUCCESS', response.message);
-            //         this.fetchFilters();
-            //     }).catch(error => {
-            //         showNotify('ERROR', error);
-            //     }).finally(() => {
-            //         this.loadingSave = false;
-            //     })
-            // }, 500)
-        },
-        saveNewFilter(filterName) {
-            // this.loadingSaveAs = true;
-            // setTimeout(() => {
-            //     apiSaveAsFilter(this.updatedFilter, filterName).then(response => {
-            //         this.selectFilter(response.data);
-            //         showNotify('SUCCESS', response.message);
-            //         this.openModal();
-            //         this.fetchFilters();
-            //     }).catch(error => {
-            //         showNotify('ERROR', error);
-            //     }).finally(() => {
-            //         this.loadingSaveAs = false;
-            //     })
-            // }, 500)
-        },
-        updateCurentFilter(updatedFilter) {
-            this.updatedFilter = deepClone(updatedFilter);
-        },
-        deleteFilter(filter) {
-            // this.loadingDelete= true;
-            // setTimeout(() => {
-            //     apiDeleteFilter(filter).then((response) => {
-            //         showNotify('SUCCESS', response.message);
-            //         this.fetchFilters();
-            //     }).finally(() => {
-            //         this.loadingDelete = false;
-            //     })
-            // }, 500);
-        }
     },
     computed: {
         ...TableCard.computed,
