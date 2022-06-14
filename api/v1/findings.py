@@ -35,7 +35,7 @@ class API(Resource):
             _res = issue.to_json()
             _res["details"] = SecurityDetails.query.filter_by(id=_res["details"]).first().details
             results.append(_res)
-        return results
+        return {"total": len(results), "rows": results}, 200
 
     def put(self, project_id: int, test_id: int):
         args = request.json
