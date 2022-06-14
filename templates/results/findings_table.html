@@ -1,6 +1,19 @@
-{% set statuses = ['valid', 'false positive', 'ignored'] %}
-{% set severities = ['critical', 'high', 'medium', 'low', 'info'] %}
+{#{% set statuses = ['valid', 'false positive', 'ignored'] %}#}
+{#{% set severities = ['critical', 'high', 'medium', 'low', 'info'] %}#}
 
+{% set severities = [
+    {'name': 'critical', 'className': 'colored-select-red'},
+    {'name': 'high', 'className': 'colored-select-orange'},
+    {'name': 'medium', 'className': 'colored-select-yellow'},
+    {'name': 'low', 'className': 'colored-select-green'},
+    {'name': 'info', 'className': 'colored-select-blue'},
+] %}
+
+{% set statuses = [
+    {'name': 'valid', 'className': 'colored-select-red'},
+    {'name': 'false positive', 'className': 'colored-select-blue'},
+    {'name': 'ignored', 'className': 'colored-select-darkblue'},
+] %}
 
 <Table-Card-Findings
         @register="register"
@@ -13,9 +26,13 @@
             'data-detail-view-icon': 'true',
             'data-filter-control': 'true',
             'data-detail-formatter': 'findings_formatter_details',
-            'data-page-size': 10
+            'data-pagination': 'true',
+            'data-page-list': [10, 15, 20],
+            'data-page-size': 10,
+            'data-pagination-parts': ['pageInfoShort', 'pageList', 'pageSize']
         }"
         container_classes="card-12"
+        :borders="true"
 >
     <template #actions="{master}">
         <div class="d-flex justify-content-end pb-4">
@@ -40,7 +57,8 @@
             </ul>
 
             <div class="dropdown_multilevel mr-2">
-                <button class="btn btn-secondary dropdown-toggle font-weight-400" type="button"
+                <button class="btn btn-secondary btn-select btn-select__sm btn-select__purple dropdown-toggle font-weight-400"
+                        type="button"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Bulk Actions
                 </button>
@@ -48,12 +66,13 @@
                     <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
                         <span class="w-100">Severity</span>
                         <i class="fa fa-sort-down" style="transform: rotate(270deg)"></i>
-                        <ul class="submenu dropdown-menu">
+                        <ul class="submenu dropdown-menu submenu__left">
+
                             {% for item in severities %}
-                                <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
-                                    @click="master.bulkModify('severity', '{{ item }}')"
+                                <li class="dropdown-menu_item dropdown-item d-flex {{ item['className'] }} severity_status_item"
+                                    @click="master.bulkModify('severity', '{{ item['name'] }}')"
                                 >
-                                    <span class="w-100">{{ item }}</span>
+                                    {{ item['name'] }}
                                 </li>
                             {% endfor %}
                         </ul>
@@ -61,12 +80,12 @@
                     <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
                         <span class="w-100">Status</span>
                         <i class="fa fa-sort-down" style="transform: rotate(270deg)"></i>
-                        <ul class="submenu dropdown-menu">
+                        <ul class="submenu dropdown-menu submenu__left">
                             {% for item in statuses %}
-                                <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
-                                    @click="master.bulkModify('status', '{{ item }}')"
+                                <li class="dropdown-menu_item dropdown-item d-flex {{ item['className'] }} severity_status_item"
+                                    @click="master.bulkModify('status', '{{ item['name'] }}')"
                                 >
-                                    <span class="w-100">{{ item }}</span>
+                                    {{ item['name'] }}
                                 </li>
                             {% endfor %}
                         </ul>
@@ -91,19 +110,17 @@
         </th>
         <th scope="col" data-sortable="true" data-field="severity" data-align="center"
             data-width="150" data-width-unit="px"
-                            data-formatter='findings_formatter_severity'
-                            data-events="findings_eventhandler"
+            data-formatter='findings_formatter_severity'
+            data-events="findings_eventhandler"
         >
             Severity
         </th>
         <th scope="col" data-sortable="true" data-field="status" data-align="center"
             data-width="150" data-width-unit="px"
-                data-formatter='findings_formatter_status'
-                data-events="findings_eventhandler"
+            data-formatter='findings_formatter_status'
+            data-events="findings_eventhandler"
         >
             Status
         </th>
     </template>
 </Table-Card-Findings>
-
-
