@@ -8,7 +8,11 @@
             id: 'artifacts',
             'data-filter-control': 'true',
             'data-url': '/api/v1/artifacts/security_results/{{ result_id }}/',
-            'data-pagination': 'false',
+            'data-pagination': 'true',
+            'data-page-list': '[10, 15, 20]',
+            'data-page-size': 10,
+            'data-side-pagination': 'client',
+            'data-pagination-parts': ['pageInfo', 'pageList', 'pageSize']
         }"
         container_classes="card-12"
         :borders="true"
