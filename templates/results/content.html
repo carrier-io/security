@@ -142,7 +142,9 @@
 {% if test_finished %}
     {% include 'security:results/show_config.html' %}
     {% include 'security:results/findings_table.html' %}
-    {% include 'security:results/artifacts_table.html' %}
+    {% with result_id=test_data.id %}
+        {% include 'security:results/artifacts_table.html' %}
+    {% endwith %}
 
 {#    {{ template_slot("security_results_show_config", payload=test_data['test_config']) | safe }}#}
 {#    {{ template_slot("security_findings_table", payload=config) | safe }}#}
