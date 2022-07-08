@@ -1,7 +1,8 @@
+from typing import Optional
+
 from sqlalchemy.sql import func, LABEL_STYLE_TABLENAME_PLUS_COL
 
 from ..models.tests import SecurityTestsDAST
-# from ..models.pd.security_test import SecurityTestParamsCommon, SecurityTestCommon, SecurityTestParamsBase
 from ..models.pd.security_test import SecurityTestParams, SecurityTestCommon
 from ..models.reports import SecurityReport
 from ..models.results import SecurityResultsDAST
@@ -62,3 +63,11 @@ class RPC:
         test_params_existing_pd.update(test_params_schedule_pd)
         test.__dict__.update(test_params_existing_pd.dict())
         return run_test(test)
+
+    @web.rpc('security_dast_job_type_by_uid')
+    @rpc_tools.wrap_exceptions(RuntimeError)
+    def job_type_by_uid(self, project_id: int, test_uid: str) -> Optional[str]:
+        if SecurityTestsDAST.query.filter(
+            SecurityTestsDAST.get_api_filter(project_id, test_uid)
+        ).first():
+            return 'dast'
