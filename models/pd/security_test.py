@@ -1,4 +1,4 @@
-from typing import Optional, List, ForwardRef
+from typing import Optional, List
 from uuid import uuid4
 from pydantic import BaseModel, validator, AnyUrl, parse_obj_as, root_validator
 
