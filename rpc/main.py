@@ -13,6 +13,8 @@ from tools import rpc_tools
 from pylon.core.tools import web
 from pydantic import ValidationError
 
+from ...shared.models.pd.test_parameters import TestParamsBase
+
 
 class RPC:
     @web.rpc('security_results_or_404', 'results_or_404')
@@ -58,7 +60,7 @@ class RPC:
     @rpc_tools.wrap_exceptions(RuntimeError)
     def run_scheduled_test(self, test_id: int, test_params: list) -> dict:
         test = SecurityTestsDAST.query.filter(SecurityTestsDAST.id == test_id).one()
-        test_params_schedule_pd = SecurityTestParams(test_parameters=test_params)
+        test_params_schedule_pd = TestParamsBase(test_parameters=test_params)
         test_params_existing_pd = SecurityTestParams.from_orm(test)
         test_params_existing_pd.update(test_params_schedule_pd)
         test.__dict__.update(test_params_existing_pd.dict())
