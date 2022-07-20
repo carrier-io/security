@@ -9,6 +9,9 @@ _required_params = {'url to scan', }
 
 
 class SecurityTestParam(TestParameter):
+    class Config:
+        anystr_strip_whitespace = True
+        anystr_lower = True
     """
     Each ROW of test_params table
     """
