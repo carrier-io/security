@@ -9,12 +9,14 @@ _required_params = {'url to scan', }
 
 
 class SecurityTestParam(TestParameter):
-    class Config:
-        anystr_strip_whitespace = True
-        anystr_lower = True
     """
     Each ROW of test_params table
     """
+
+    class Config:
+        anystr_strip_whitespace = True
+        anystr_lower = True
+
     _type_mapping_by_name = {
         'url to scan': List[AnyUrl],
         'exclusions': List[Optional[AnyUrl]]
@@ -28,6 +30,11 @@ class SecurityTestParams(TestParamsBase):
     Base case class for security test.
     Used as a parent class for actual security test model
     """
+
+    class Config:
+        anystr_strip_whitespace = True
+        anystr_lower = True
+
     _required_params = _required_params
 
     # the following fields are optional as they are set in validator using _test_params_mapping
@@ -57,6 +64,15 @@ class SecurityTestParams(TestParamsBase):
                 ...
 
         return value
+
+    @root_validator(pre=True)
+    def make_lowercase(cls, values):
+        for i in values.get('test_parameters', []):
+            for field in ['name', 'type']:
+                val = i.get(field)
+                if val:
+                    i[field] = str(val).lower()
+        return values
 
 
 class SecurityTestCommon(BaseModel):
