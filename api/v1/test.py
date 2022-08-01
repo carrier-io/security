@@ -1,7 +1,6 @@
-import json
 from typing import Union
 
-from flask import request, make_response
+from flask import request
 from flask_restful import Resource
 from pylon.core.tools import log
 
@@ -35,7 +34,8 @@ class API(Resource):
         )
 
         if errors:
-            return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
+            return errors, 400
+            # return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
         test_query = SecurityTestsDAST.query.filter(SecurityTestsDAST.get_api_filter(project_id, test_id))
 
@@ -49,9 +49,9 @@ class API(Resource):
 
         if run_test_:
             resp = run_test(test)
-            return make_response(resp, resp.get('code', 200))
+            return resp, resp.get('code', 200)
 
-        return make_response(test.to_json(), 200)
+        return test.to_json(), 200
 
     def post(self, project_id: int, test_id: Union[int, str]):
         """ Run test """
@@ -59,4 +59,4 @@ class API(Resource):
             SecurityTestsDAST.get_api_filter(project_id, test_id)
         ).first()
         resp = run_test(test, config_only=request.json.get('type', False))
-        return make_response(resp, resp.get('code', 200))
+        return resp, resp.get('code', 200)

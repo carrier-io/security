@@ -1,9 +1,8 @@
-import json
 from queue import Empty
 
 from flask_restful import Resource
 from pylon.core.tools import log
-from flask import request, make_response
+from flask import request
 from sqlalchemy import and_
 
 from ...models.tests import SecurityTestsDAST
@@ -35,10 +34,7 @@ class API(Resource):
                     ...
             test['scanners'] = i.scanners
             rows.append(test)
-        return make_response(
-            {"total": total, "rows": rows},
-            200
-        )
+        return {"total": total, "rows": rows}, 200
 
     @staticmethod
     def get_schedules_ids(filter_) -> set:
@@ -54,7 +50,7 @@ class API(Resource):
         try:
             delete_ids = list(map(int, request.args["id[]"].split(',')))
         except TypeError:
-            return make_response('IDs must be integers', 400)
+            return 'IDs must be integers', 400
 
         filter_ = and_(
             SecurityTestsDAST.project_id == project.id,
@@ -73,7 +69,7 @@ class API(Resource):
         ).delete()
         SecurityTestsDAST.commit()
 
-        return make_response({'ids': delete_ids}, 200)
+        return {'ids': delete_ids}, 200
 
     def post(self, project_id: int):
         """
@@ -88,7 +84,8 @@ class API(Resource):
         )
 
         if errors:
-            return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
+            return errors, 400
+            # return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
         # log.warning('TEST DATA')
         # log.warning(test_data)
@@ -126,5 +123,5 @@ class API(Resource):
 
         if run_test_:
             resp = run_test(test)
-            return make_response(resp, resp.get('code', 200))
+            return resp, resp.get('code', 200)
         return test.to_json()
