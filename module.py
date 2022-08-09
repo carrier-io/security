@@ -21,7 +21,7 @@ from pylon.core.tools import log  # pylint: disable=E0611,E0401
 from pylon.core.tools import module  # pylint: disable=E0611,E0401
 
 from .init_db import init_db
-from tools import theme
+from tools import theme, shared
 
 
 class Module(module.ModuleModel):
@@ -63,6 +63,8 @@ class Module(module.ModuleModel):
             kind="slot",
             prefix="security_app_results_",
         )
+
+        shared.job_type_rpcs.add('security_dast')
 
     def deinit(self):  # pylint: disable=R0201
         """ De-init module """
