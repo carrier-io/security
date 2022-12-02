@@ -11,7 +11,7 @@ from .models.results import SecurityResultsDAST
 from tools import rpc_tools, task_tools
 
 
-def run_test(test: SecurityTestsDAST, config_only=False) -> dict:
+def run_test(test: SecurityTestsDAST, config_only=False, engagement_id=None) -> dict:
     results = SecurityResultsDAST(
         project_id=test.project_id,
         test_id=test.id,
