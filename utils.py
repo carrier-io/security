@@ -11,12 +11,15 @@ from .models.results import SecurityResultsDAST
 from tools import rpc_tools, task_tools
 
 
-def run_test(test: SecurityTestsDAST, config_only=False, engagement_id=None) -> dict:
+def run_test(test: SecurityTestsDAST, config_only=False) -> dict:
+    engagement_id = test.integrations.get('reporters', {}).get('reporter_engagement')
+
     results = SecurityResultsDAST(
         project_id=test.project_id,
         test_id=test.id,
         test_uid=test.test_uid,
-        test_name=test.name
+        test_name=test.name,
+        engagement=engagement_id
     )
     results.insert()
 
