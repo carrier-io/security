@@ -2,16 +2,17 @@
     <div class="flex-container">
         <div class="flex-item-2">
             <Table-Card
-                    @register="register"
-                    instance_name="table_tests"
+                @register="register"
+                instance_name="table_tests"
 
-                    header='Application Tests'
-                    :table_attributes="{
-                        'data-url': '/api/v1/security/tests/{{ tools.session_project.get() }}',
-                        'data-page-size': 5,
-                        id: 'application_tests_table'
-                    }"
-                    container_classes="h-100"
+                header='Application Tests'
+                :table_attributes="{
+                    'data-url': '/api/v1/security/tests/{{ tools.session_project.get() }}',
+                    'data-page-size': 5,
+                    id: 'application_tests_table',
+                    'data-query-params': 'testQueryParams'
+                }"
+                container_classes="h-100"
             >
                 <template #actions>
                     <div class="d-flex justify-content-end">
@@ -97,7 +98,8 @@
             {#            :borders="true"#}
             :table_attributes="{
                 'data-url': '/api/v1/security/results/{{ tools.session_project.get() }}',
-                id: 'results_table'
+                id: 'results_table',
+                'data-query-params': 'testResultsqueryParams'
             }"
             container_classes="mt-3"
     >

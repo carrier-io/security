@@ -174,6 +174,19 @@ var apiActions = {
 
 }
 
+function testQueryParams(params){
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const currentParams = Object.fromEntries(urlSearchParams.entries());
+    params['filter'] = JSON.stringify({'test_uid': currentParams['test_uid']})
+    return params
+}
+
+function testResultsqueryParams(params){
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    const currentParams = Object.fromEntries(urlSearchParams.entries());
+    params['filter'] = JSON.stringify(currentParams)
+    return params
+}
 
 $(document).on('vue_init', () => {
     $('#delete_test').on('click', e => {
