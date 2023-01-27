@@ -95,12 +95,9 @@ class SecurityResultsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixi
 
     def to_json(self, exclude_fields: tuple = ()) -> dict:
         test_param = super().to_json(exclude_fields)
-
         test_param["name"] = test_param.pop("test_name")
         if test_param["duration"]:
-            test_param["ended_date"] = api_tools.format_date(
-                test_param["start_date"] + timedelta(seconds=float(test_param["duration"])))
-        test_param["start_date"] = api_tools.format_date(test_param["start_date"])
+            test_param["ended_date"] = self.start_date + timedelta(seconds=float(self.duration))
         return test_param
 
     def update_severity_counts(self):
