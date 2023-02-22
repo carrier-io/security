@@ -16,13 +16,13 @@
             >
                 <template #actions>
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-32 btn-secondary" id="create_test"
-                                data-toggle="modal" data-target="#createApplicationTest"><i
-                                class="fas fa-plus"></i></button>
-                        <button type="button" class="btn btn-32 btn-secondary" id="filter_test"><i
-                                class="fas fa-filter"></i></button>
-                        <button type="button" class="btn btn-32 btn-secondary" id="delete_test"><i
-                                class="fas fa-trash-alt"></i></button>
+                        <button type="button" class="btn btn-basic btn-icon mr-2" id="create_test"
+                                data-toggle="modal" data-target="#createApplicationTest">
+                            <i class="icon__18x18 icon-create-element icon__white"></i>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-icon btn-icon__purple" id="delete_test">
+                            <i class="icon__18x18 icon-delete"></i>
+                        </button>
                     </div>
                 </template>
                 <template #table_headers>
@@ -64,16 +64,13 @@
             >
                 <template #actions>
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-plus"></i>
+                        <button type="button" class="btn btn-basic btn-icon mr-2"
+                                data-toggle="modal" data-target="#createApplicationTest">
+                            <i class="icon__18x18 icon-create-element icon__white"></i>
                         </button>
-                        <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-sync"></i>
+                        <button type="button" class="btn btn-secondary btn-icon btn-icon__purple">
+                            <i class="icon__18x18 icon-delete"></i>
                         </button>
-                        <button type="button" class="btn btn-32 btn-secondary"><i
-                                class="fas fa-filter"></i></button>
-                        <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-tag"></i>
-                        </button>
-                        <button type="button" class="btn btn-32 btn-secondary"><i
-                                class="fas fa-trash-alt"></i></button>
                     </div>
                 </template>
                 <template #table_headers>
@@ -95,7 +92,7 @@
             instance_name="table_results"
 
             header='Results'
-            {#            :borders="true"#}
+            :adaptive-height="true"
             :table_attributes="{
                 'data-url': '/api/v1/security/results/{{ tools.session_project.get() }}',
                 id: 'results_table',
@@ -105,10 +102,9 @@
     >
         <template #actions>
             <div class="d-flex justify-content-end">
-                {#                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-sync"></i></button>#}
-                {#                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-filter"></i></button>#}
-                {#                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-tag"></i></button>#}
-                <button type="button" class="btn btn-32 btn-secondary"><i class="fas fa-trash-alt"></i></button>
+                <button type="button" class="btn btn-secondary btn-icon btn-icon__purple">
+                    <i class="icon__18x18 icon-delete"></i>
+                </button>
             </div>
         </template>
         <template #table_headers>
