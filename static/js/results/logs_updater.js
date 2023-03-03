@@ -22,7 +22,7 @@ const LogsApp = {
     // },
     computed: {
         reversedLogs: function () {
-            return this.logs.reverse()
+            return this.logs.slice().reverse()
         },
     },
     template: `
