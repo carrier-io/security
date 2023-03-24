@@ -16,16 +16,9 @@ from json import dumps
 from queue import Empty
 from typing import List, Union
 
-from sqlalchemy import Column, Integer, String, ARRAY, JSON, DateTime, and_
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, ARRAY, JSON, and_
 
-from tools import rpc_tools, db, db_tools, constants, secrets_tools
-
-# from ...shared.utils.rpc import RpcMixin
-# from ...shared.db_manager import Base
-# from ...shared.models.abstract_base import AbstractBaseMixin
-# from ...shared.constants import CURRENT_RELEASE
-# from ...projects.connectors.secrets import get_project_hidden_secrets, unsecret
+from tools import rpc_tools, db, db_tools, constants, VaultClient
 
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 
@@ -105,7 +98,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             output='cc',
             thresholds={}
     ):
-
+        vault_client = VaultClient.from_project(self.project_id)
         if output == "dusty":
             from flask import current_app
             global_dast_settings = dict()
@@ -236,28 +229,16 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                 },
             }
             reporters_config["centry_status"] = {
-                "url": secrets_tools.unsecret(
-                    "{{secret.galloper_url}}",
-                    project_id=self.project_id
-                ),
-                "token": secrets_tools.unsecret(
-                    "{{secret.auth_token}}",
-                    project_id=self.project_id
-                ),
+                "url": vault_client.unsecret("{{secret.galloper_url}}"),
+                "token": vault_client.unsecret("{{secret.auth_token}}"),
                 "project_id": str(self.project_id),
                 "test_id": str(self.results_test_id),
             }
 
 
             reporters_config["centry"] = {
-                "url": secrets_tools.unsecret(
-                    "{{secret.galloper_url}}",
-                    project_id=self.project_id
-                ),
-                "token": secrets_tools.unsecret(
-                    "{{secret.auth_token}}",
-                    project_id=self.project_id
-                ),
+                "url": vault_client.unsecret("{{secret.galloper_url}}"),
+                "token": vault_client.unsecret("{{secret.auth_token}}"),
                 "project_id": str(self.project_id),
                 "test_id": str(self.results_test_id),
             }
@@ -380,37 +361,22 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
         container = f"getcarrier/dast:latest"
         parameters = {
             "cmd": f"run -b centry:{job_type}_{self.test_uid} -s {job_type}",
-            "GALLOPER_URL": secrets_tools.unsecret(
-                "{{secret.galloper_url}}",
-                project_id=self.project_id
-            ),
+            "GALLOPER_URL": vault_client.unsecret("{{secret.galloper_url}}"),
             "GALLOPER_PROJECT_ID": f"{self.project_id}",
-            "GALLOPER_AUTH_TOKEN": secrets_tools.unsecret(
-                "{{secret.auth_token}}",
-                project_id=self.project_id
-            ),
+            "GALLOPER_AUTH_TOKEN": vault_client.unsecret("{{secret.auth_token}}"),
         }
         cc_env_vars = {
-            "RABBIT_HOST": secrets_tools.unsecret(
-                "{{secret.rabbit_host}}",
-                project_id=self.project_id
-            ),
-            "RABBIT_USER": secrets_tools.unsecret(
-                "{{secret.rabbit_user}}",
-                project_id=self.project_id
-            ),
-            "RABBIT_PASSWORD": secrets_tools.unsecret(
-                "{{secret.rabbit_password}}",
-                project_id=self.project_id
-            )
+            "RABBIT_HOST": vault_client.unsecret("{{secret.rabbit_host}}"),
+            "RABBIT_USER": vault_client.unsecret("{{secret.rabbit_user}}"),
+            "RABBIT_PASSWORD": vault_client.unsecret("{{secret.rabbit_password}}")
         }
         concurrency = 1
 
         if output == "docker":
             return f"docker run --rm -i -t " \
                    f"-e project_id={self.project_id} " \
-                   f"-e galloper_url={secrets_tools.unsecret('{{secret.galloper_url}}', project_id=self.project_id)} " \
-                   f"-e token=\"{secrets_tools.unsecret('{{secret.auth_token}}', project_id=self.project_id)}\" " \
+                   f"-e galloper_url={vault_client.unsecret('{{secret.galloper_url}}')} " \
+                   f"-e token=\"{vault_client.unsecret('{{secret.auth_token}}')}\" " \
                    f"getcarrier/control_tower:{constants.CURRENT_RELEASE} " \
                    f"-tid {self.test_uid}"
         if output == "cc":
