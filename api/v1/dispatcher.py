@@ -1,8 +1,6 @@
 from flask_restful import Resource
 from sqlalchemy import and_
 
-# from ...shared.utils.restApi import RestResource
-# from ...shared.utils.api_utils import build_req_parser
 
 from ...models.tests import SecurityTestsDAST
 from ...models.thresholds import SecurityThresholds
