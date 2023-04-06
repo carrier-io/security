@@ -8,5 +8,5 @@ def init_db():
 
     from .models.details import SecurityDetails
     from .models.reports import SecurityReport
-    db.Base.metadata.create_all(bind=db.engine)
+    db.get_shared_metadata().create_all(bind=db.engine)
 
