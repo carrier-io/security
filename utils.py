@@ -8,10 +8,10 @@ from pylon.core.tools import log
 from .models.tests import SecurityTestsDAST
 from .models.results import SecurityResultsDAST
 
-from tools import rpc_tools, task_tools
+from tools import rpc_tools, TaskManager
 
 
-def run_test(test: SecurityTestsDAST, config_only=False) -> dict:
+def run_test(test: SecurityTestsDAST, config_only: bool = False) -> dict:
     engagement_id = test.integrations.get('reporters', {}).get('reporter_engagement')
 
     results = SecurityResultsDAST(
@@ -31,7 +31,7 @@ def run_test(test: SecurityTestsDAST, config_only=False) -> dict:
     if config_only:
         return event[0]
 
-    resp = task_tools.run_task(test.project_id, event)
+    resp = TaskManager(test.project_id).run_task(event)
     resp['redirect'] = f'/task/{resp["task_id"]}/results'  # todo: where this should lead to?
 
     test.rpc.call.increment_statistics(test.project_id, 'dast_scans')
