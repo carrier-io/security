@@ -4,22 +4,22 @@
             <div class="modal-header">
                 <div class="row w-100">
                     <div class="col">
-                        <h2 id="modal_title">Add Application Test</h2>
+                        <p class="font-h3 font-bold" id="modal_title">Create Application Test</p>
                     </div>
                     <div class="col-xs ">
-                        <button type="button" class="btn ml-1 btn-projects" data-dismiss="modal"><i
-                                class="fas fa-file-alt"></i> Use template
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            Use template
                         </button>
-                        <button type="button" class="btn ml-1 btn-projects" data-dismiss="modal"><i
-                                class="fas fa-file"></i> Save as template
+                        <button type="button" class="btn ml-2 btn-default" data-dismiss="modal">
+                            Save as template
                         </button>
-                        <button type="button" class="btn ml-1 btn-secondary" data-dismiss="modal" aria-label="Close">
+                        <button type="button" class="btn ml-2 btn-secondary" data-dismiss="modal" aria-label="Close">
                             Cancel
                         </button>
-                        <button type="button" id="security_test_save" class="btn ml-1 btn-secondary">
+                        <button type="button" id="security_test_save" class="btn ml-2 btn-secondary">
                             Save
                         </button>
-                        <button type="button" id="security_test_save_and_run" class="btn ml-1 btn-basic">
+                        <button type="button" id="security_test_save_and_run" class="btn ml-2 btn-basic">
                             Save and start
                         </button>
                     </div>
@@ -36,21 +36,28 @@
 
                 <div class="row">
                     <div class="form-group col-6">
-                        <h9>Test Name</h9>
-                        <p>
-                            <h13>Enter a name that describes the purpose of your test</h13>
-                        </p>
-                        <input type="text" id="test_name" class="form-control form-control-alternative"
-                               placeholder="Test Name">
-                        <div class="invalid-feedback"></div>
+                        <p class="font-h5 font-semibold">Test Name</p>
+                        <p class="font-h6 font-weight-400">Enter a name that describes the purpose of your test.</p>
+                        <div class="custom-input mb-3 mt-2">
+                            <input type="text"
+                                   id="test_name"
+                                   placeholder="Test Name"
+                                   class="form-control form-control-alternative"
+                            >
+                            <div class="invalid-feedback"></div>
+                        </div>
                     </div>
                     <div class="form-group col-6">
-                        <h9>Test context/scope</h9>
-                        <p>
-                            <h13>Description</h13>
-                        </p>
-                        <input type="text" id="test_description" class="form-control form-control-alternative"
-                               placeholder="Some data">
+                        <p class="font-h5 font-semibold">Test context/scope</p>
+                        <p class="font-h6 font-weight-400">Description</p>
+
+                        <div class="custom-input mb-3 mt-2">
+                            <input type="text"
+                                   id="test_description"
+                                   placeholder="Some data"
+                                   class="form-control form-control-alternative"
+                            >
+                        </div>
                     </div>
                 </div>
 

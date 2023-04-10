@@ -6,6 +6,7 @@ const LogsApp = {
             websocket_api_url: '',
             state: 'unknown',
             websocket: undefined,
+            retry_interval: undefined,
             connection_retries: 5,
             connection_retry_timeout: 2000,
             logs: []
@@ -22,7 +23,7 @@ const LogsApp = {
     // },
     computed: {
         reversedLogs: function () {
-            return this.logs.reverse()
+            return this.logs.slice().reverse()
         },
     },
     template: `
@@ -80,14 +81,10 @@ const LogsApp = {
         },
         on_websocket_close(message) {
             this.state = 'disconnected'
-            let attempt = 1;
-            const intrvl = setInterval(() => {
+            this.retry_interval = setInterval(() => {
+                clearInterval(this.retry_interval)
                 this.init_websocket()
-                if (this.state === 'connected' || attempt > this.connection_retries) clearInterval(intrvl)
-                attempt ++
             }, this.connection_retry_timeout)
-            // setTimeout(websocket_connect, 1 * 1000);
-            //    clearInterval(websocket_connect)
         },
         on_websocket_error(message) {
             this.state = 'error'
