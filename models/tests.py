@@ -16,19 +16,14 @@ from json import dumps
 from queue import Empty
 from typing import List, Union
 
-from sqlalchemy import Column, Integer, String, ARRAY, JSON, DateTime, and_
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, ARRAY, JSON, and_
 
-from ...shared.utils.rpc import RpcMixin
-from ...shared.db_manager import Base
-from ...shared.models.abstract_base import AbstractBaseMixin
-from ...shared.constants import CURRENT_RELEASE
-from ...projects.connectors.secrets import get_project_hidden_secrets, unsecret
+from tools import rpc_tools, db, db_tools, constants, VaultClient
 
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 
 
-class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
+class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin):
     __tablename__ = "security_tests_dast"
     id = Column(Integer, primary_key=True)
     project_id = Column(Integer, unique=False, nullable=False)
@@ -79,8 +74,11 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
         self.commit()
 
     @property
-    def scanners(self):
-        return list(self.integrations.get('scanners', {}).keys())
+    def scanners(self) -> list:
+        try:
+            return list(self.integrations.get('scanners', {}).keys())
+        except AttributeError:
+            return []
 
     @staticmethod
     def get_api_filter(project_id: int, test_id: Union[int, str]):
@@ -100,7 +98,7 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
             output='cc',
             thresholds={}
     ):
-
+        vault_client = VaultClient.from_project(self.project_id)
         if output == "dusty":
             from flask import current_app
             global_dast_settings = dict()
@@ -110,17 +108,30 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
             # if "toolreports" in self.reporting:
             #     global_dast_settings["save_intermediates_to"] = "/tmp/intermediates"
 
-            scanners_config = dict()
+            # Thresholds
+            tholds = {}
+            if thresholds and any(int(thresholds[key]) > -1 for key in thresholds.keys()):
 
+                for key, value in thresholds.items():
+                    if int(value) > -1:
+                        tholds[key.capitalize()] = int(value)
+
+            #
+            # Scanners
+            #
+
+            scanners_config = dict()
             for scanner_name in self.integrations.get('scanners', []):
                 try:
-                    scanners_config[scanner_name] = \
+                    config_name, config_data = \
                         self.rpc.call_function_with_timeout(
                             func=f'dusty_config_{scanner_name}',
+                            timeout=2,
                             context=None,
                             test_params=self.__dict__,
                             scanner_params=self.integrations["scanners"][scanner_name],
                         )
+                    scanners_config[config_name] = config_data
                 except Empty:
                     log.warning(f'Cannot find scanner config rpc for {scanner_name}')
 
@@ -138,16 +149,74 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
             #             scanners_data[setting]
             #         )
 
+            #
+            # Processing
+            #
+
+            processing_config = dict()
+            for processor_name in self.integrations.get("processing", []):
+                try:
+                    config_name, config_data = \
+                        self.rpc.call_function_with_timeout(
+                            func=f"dusty_config_{processor_name}",
+                            timeout=2,
+                            context=None,
+                            test_params=self.__dict__,
+                            scanner_params=self.integrations["processing"][processor_name],
+                        )
+                    processing_config[config_name] = config_data
+                except Empty:
+                    log.warning(f'Cannot find processor config rpc for {processor_name}')
+
+            processing_config["quality_gate"] = {
+                "thresholds": tholds
+            }
+
+            # "min_severity_filter": {
+            #     "severity": "Info"
+            # },
+            # "quality_gate": {
+            #     "thresholds": tholds
+            # },
+            # # "false_positive": {
+            # #     "galloper": secrets_tools.unsecret(
+            # #         "{{secret.galloper_url}}",
+            # #         project_id=self.project_id
+            # #     ),
+            # #     "project_id": f"{self.project_id}",
+            # #     "token": secrets_tools.unsecret(
+            # #         "{{secret.auth_token}}",
+            # #         project_id=self.project_id
+            # #     )
+            # # },
+            # # "ignore_finding": {
+            # #     "galloper": secrets_tools.unsecret(
+            # #         "{{secret.galloper_url}}",
+            # #         project_id=self.project_id
+            # #     ),
+            # #     "project_id": f"{self.project_id}",
+            # #     "token": secrets_tools.unsecret(
+            # #         "{{secret.auth_token}}",
+            # #         project_id=self.project_id
+            # #     )
+            # # }
+
+            #
+            # Reporters
+            #
+
             reporters_config = dict()
             for reporter_name in self.integrations.get('reporters', []):
                 try:
-                    reporters_config[reporter_name] = \
+                    config_name, config_data = \
                         self.rpc.call_function_with_timeout(
                             func=f'dusty_config_{reporter_name}',
+                            timeout=2,
                             context=None,
                             test_params=self.__dict__,
                             scanner_params=self.integrations["reporters"][reporter_name],
                         )
+                    reporters_config[config_name] = config_data
                 except Empty:
                     log.warning(f'Cannot find reporter config rpc for {reporter_name}')
 
@@ -160,25 +229,18 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
                 },
             }
             reporters_config["centry_status"] = {
-                "url": unsecret(
-                    "{{secret.galloper_url}}",
-                    project_id=self.project_id
-                ),
+                "url": vault_client.unsecret("{{secret.galloper_url}}"),
+                "token": vault_client.unsecret("{{secret.auth_token}}"),
                 "project_id": str(self.project_id),
                 "test_id": str(self.results_test_id),
             }
 
 
-            reporters_config["galloper"] = {
-                "url": unsecret(
-                    "{{secret.galloper_url}}",
-                    project_id=self.project_id
-                ),
-                "project_id": f"{self.project_id}",
-                "token": unsecret(
-                    "{{secret.auth_token}}",
-                    project_id=self.project_id
-                ),
+            reporters_config["centry"] = {
+                "url": vault_client.unsecret("{{secret.galloper_url}}"),
+                "token": vault_client.unsecret("{{secret.auth_token}}"),
+                "project_id": str(self.project_id),
+                "test_id": str(self.results_test_id),
             }
             # TODO: check valid reports names
             # for report_type in self.reporting:
@@ -248,13 +310,6 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
             #                 "rp_project_name": rp["rp_project"],
             #                 "rp_launch_name": "dast"
             #             }
-            # Thresholds
-            tholds = {}
-            if thresholds and any(int(thresholds[key]) > -1 for key in thresholds.keys()):
-
-                for key, value in thresholds.items():
-                    if int(value) > -1:
-                        tholds[key.capitalize()] = int(value)
 
             dusty_config = {
                 "config_version": 2,
@@ -288,36 +343,7 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
                             #     },
                             # },
                         },
-                        "processing": {
-                            "min_severity_filter": {
-                                "severity": "Info"
-                            },
-                            "quality_gate": {
-                                "thresholds": tholds
-                            },
-                            "false_positive": {
-                                "galloper": unsecret(
-                                    "{{secret.galloper_url}}",
-                                    project_id=self.project_id
-                                ),
-                                "project_id": f"{self.project_id}",
-                                "token": unsecret(
-                                    "{{secret.auth_token}}",
-                                    project_id=self.project_id
-                                )
-                            },
-                            "ignore_finding": {
-                                "galloper": unsecret(
-                                    "{{secret.galloper_url}}",
-                                    project_id=self.project_id
-                                ),
-                                "project_id": f"{self.project_id}",
-                                "token": unsecret(
-                                    "{{secret.auth_token}}",
-                                    project_id=self.project_id
-                                )
-                            }
-                        },
+                        "processing": processing_config,
                         "reporters": reporters_config
                     }
                 }
@@ -334,39 +360,24 @@ class SecurityTestsDAST(AbstractBaseMixin, Base, RpcMixin):
         # container = f"getcarrier/sast:latest"
         container = f"getcarrier/dast:latest"
         parameters = {
-            "cmd": f"run -b galloper:{job_type}_{self.test_uid} -s {job_type}",
-            "GALLOPER_URL": unsecret(
-                "{{secret.galloper_url}}",
-                project_id=self.project_id
-            ),
+            "cmd": f"run -b centry:{job_type}_{self.test_uid} -s {job_type}",
+            "GALLOPER_URL": vault_client.unsecret("{{secret.galloper_url}}"),
             "GALLOPER_PROJECT_ID": f"{self.project_id}",
-            "GALLOPER_AUTH_TOKEN": unsecret(
-                "{{secret.auth_token}}",
-                project_id=self.project_id
-            ),
+            "GALLOPER_AUTH_TOKEN": vault_client.unsecret("{{secret.auth_token}}"),
         }
         cc_env_vars = {
-            "RABBIT_HOST": unsecret(
-                "{{secret.rabbit_host}}",
-                project_id=self.project_id
-            ),
-            "RABBIT_USER": unsecret(
-                "{{secret.rabbit_user}}",
-                project_id=self.project_id
-            ),
-            "RABBIT_PASSWORD": unsecret(
-                "{{secret.rabbit_password}}",
-                project_id=self.project_id
-            )
+            "RABBIT_HOST": vault_client.unsecret("{{secret.rabbit_host}}"),
+            "RABBIT_USER": vault_client.unsecret("{{secret.rabbit_user}}"),
+            "RABBIT_PASSWORD": vault_client.unsecret("{{secret.rabbit_password}}")
         }
         concurrency = 1
 
         if output == "docker":
             return f"docker run --rm -i -t " \
                    f"-e project_id={self.project_id} " \
-                   f"-e galloper_url={unsecret('{{secret.galloper_url}}', project_id=self.project_id)} " \
-                   f"-e token=\"{unsecret('{{secret.auth_token}}', project_id=self.project_id)}\" " \
-                   f"getcarrier/control_tower:{CURRENT_RELEASE} " \
+                   f"-e galloper_url={vault_client.unsecret('{{secret.galloper_url}}')} " \
+                   f"-e token=\"{vault_client.unsecret('{{secret.auth_token}}')}\" " \
+                   f"getcarrier/control_tower:{constants.CURRENT_RELEASE} " \
                    f"-tid {self.test_uid}"
         if output == "cc":
             channel = self.scan_location

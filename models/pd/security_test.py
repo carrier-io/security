@@ -1,90 +1,84 @@
-from typing import Optional, List, ForwardRef
+from typing import Optional, List
 from uuid import uuid4
 from pydantic import BaseModel, validator, AnyUrl, parse_obj_as, root_validator
 
-from ..api_tests import SecurityTestsDAST
-
-from ....shared.models.pd.test_parameters import TestParameter
-
-
-class SecurityTestParams(BaseModel):
-    _test_params_mapping = {
-        'url to scan': 'urls_to_scan',
-        'exclusions': 'urls_exclusions',
-        'scan location': 'scan_location',
-    }
-    _required_params = set()
-
-    # the following fields are optional as they are set in test_parameters validator using _test_params_mapping
-    urls_to_scan: Optional[List[AnyUrl]] = []
-    urls_exclusions: Optional[List[AnyUrl]] = []
-    scan_location: Optional[str] = ''
-
-    test_parameters: List[TestParameter]
-
-    @validator('test_parameters')
-    def set_values_from_test_params(cls, value, values):
-        # from pylon.core.tools import log
-        # log.info('validator test_parameters called')
-        for i in value:
-            if i.name in cls._test_params_mapping.keys():
-                values[cls._test_params_mapping[i.name]] = i.default
-        return value
-
-    @classmethod
-    def from_orm(cls, db_obj: SecurityTestsDAST):
-        instance = cls(
-            test_parameters=db_obj.test_parameters,
-            urls_to_scan=db_obj.urls_to_scan,
-            urls_exclusions=[] if db_obj.urls_exclusions == [''] else db_obj.urls_exclusions,
-            scan_location=db_obj.scan_location
-        )
-        return instance
-
-    def update(self, other: ForwardRef('SecurityTestParams')):
-        test_params_names = set(map(lambda tp: tp.name, other.test_parameters))
-        modified_params = other.test_parameters
-        for tp in self.test_parameters:
-            if tp.name not in test_params_names:
-                modified_params.append(tp)
-        self.test_parameters = modified_params
-        if other.urls_to_scan:
-            self.urls_to_scan = other.urls_to_scan
-        if other.urls_exclusions and other.urls_exclusions != ['']:
-            self.urls_exclusions = other.urls_exclusions
-        if other.scan_location:
-            self.scan_location = other.scan_location
-
-
-SecurityTestParams.update_forward_refs()
+from ....shared.models.pd.test_parameters import TestParameter, TestParamsBase  # todo: workaround for this import
 
 
 _required_params = {'url to scan', }
 
 
 class SecurityTestParam(TestParameter):
-    _type_mapping_by_name = {'url to scan': List[AnyUrl]}
+    """
+    Each ROW of test_params table
+    """
+
+    class Config:
+        anystr_strip_whitespace = True
+        anystr_lower = True
+
+    _type_mapping_by_name = {
+        'url to scan': List[AnyUrl],
+        'exclusions': List[Optional[AnyUrl]]
+    }
+
     _required_params = _required_params
 
-    @validator('default')
-    def validate_required(cls, value, values):
-        if values['name'] in cls._required_params:
-            assert value and value != [''], f'{values["name"]} is required'
-        return value
 
+class SecurityTestParams(TestParamsBase):
+    """
+    Base case class for security test.
+    Used as a parent class for actual security test model
+    """
 
-class SecurityTestParamsCommon(SecurityTestParams):
+    class Config:
+        anystr_strip_whitespace = True
+        anystr_lower = True
+
     _required_params = _required_params
+
+    # the following fields are optional as they are set in validator using _test_params_mapping
+    urls_to_scan: Optional[List[AnyUrl]] = []
+    urls_exclusions: Optional[List[Optional[AnyUrl]]] = []
+    scan_location: Optional[str] = ''
     test_parameters: List[SecurityTestParam]
 
-    @validator('test_parameters')
-    def required_test_param(cls, value):
-        lacking_values = cls._required_params.difference(set(i.name for i in value))
-        assert not lacking_values, f'The following parameters are required: {" ".join(lacking_values)}'
+    @validator('scan_location', 'urls_exclusions', 'urls_to_scan', always=True)
+    def set_values_from_test_params(cls, value, values, field):
+        if value and value != field.default:
+            return value
+        _test_params_mapping = {
+            'url to scan': 'urls_to_scan',
+            'urls_to_scan': 'url to scan',
+            'exclusions': 'urls_exclusions',
+            'urls_exclusions': 'exclusions',
+            'scan location': 'scan_location',
+            'scan_location': 'scan location',
+        }
+
+        mapped_name = _test_params_mapping.get(field.name)
+        if mapped_name:
+            try:
+                return [i.default for i in values['test_parameters'] if i.name == mapped_name][0]
+            except (IndexError, KeyError):
+                ...
+
         return value
+
+    @root_validator(pre=True)
+    def make_lowercase(cls, values):
+        for i in values.get('test_parameters', []):
+            for field in ['name', 'type']:
+                val = i.get(field)
+                if val:
+                    i[field] = str(val).lower()
+        return values
 
 
 class SecurityTestCommon(BaseModel):
+    """
+    Model of test itself without test_params or other plugin module's data
+    """
     # _empty_str_to_none = empty_str_to_none
     project_id: int
     project_name: str

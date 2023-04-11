@@ -1,0 +1,134 @@
+<div class="p-3">
+    <div class="flex-container">
+        <div class="flex-item-2">
+            <Table-Card
+                @register="register"
+                instance_name="table_tests"
+
+                header='Application Tests'
+                :table_attributes="{
+                    'data-url': '/api/v1/security/tests/{{ tools.session_project.get() }}',
+                    'data-page-size': 5,
+                    id: 'application_tests_table',
+                    'data-query-params': 'testQueryParams'
+                }"
+                container_classes="h-100"
+            >
+                <template #actions>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-basic btn-icon mr-2" id="create_test"
+                                data-toggle="modal" data-target="#createApplicationTest">
+                            <i class="icon__18x18 icon-create-element icon__white"></i>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-icon btn-icon__purple" id="delete_test">
+                            <i class="icon__18x18 icon-delete"></i>
+                        </button>
+                    </div>
+                </template>
+                <template #table_headers>
+                    <th scope="col" data-checkbox="true"></th>
+                    <th scope="col" data-sortable="true" data-field="name">Name</th>
+                    <th scope="col" data-sortable="true" data-field="urls_to_scan"
+                        data-width="240" data-width-unit="px"
+                        data-formatter="tableFormatters.application_urls"
+                    >Urls</th>
+                    <th scope="col" data-sortable="true" data-field="test_uid" data-visible="false">Uuid</th>
+                    <th scope="col" data-sortable="true" data-field="integrations"
+                        data-formatter="tableFormatters.tests_tools"
+                    >
+                        Tools
+                    </th>
+                    <th scope="col"
+                        data-align="right"
+                        data-events="tableFormatters.status_events"
+                        data-formatter="tableFormatters.tests_actions"
+                        data-width="100" data-width-unit="px"
+                    >
+                        Actions
+                    </th>
+                </template>
+            </Table-Card>
+        </div>
+        <div class="flex-item-2">
+            <Table-Card
+                    @register="register"
+                    instance_name="table_thresholds"
+
+                    header='Thresholds'
+                    :table_attributes="{
+{#                        'data-url': '/api/v1/security/tests/{{ tools.session_project.get() }}',#}
+                        'data-page-size': 5,
+                        id: 'thresholds_table'
+                    }"
+                    container_classes="h-100"
+            >
+                <template #actions>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-basic btn-icon mr-2"
+                                data-toggle="modal" data-target="#createApplicationTest">
+                            <i class="icon__18x18 icon-create-element icon__white"></i>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-icon btn-icon__purple">
+                            <i class="icon__18x18 icon-delete"></i>
+                        </button>
+                    </div>
+                </template>
+                <template #table_headers>
+                    <th scope="col" data-checkbox="true"></th>
+                    <th data-visible="false" data-field="id">index</th>
+                    <th scope="col" data-sortable="true" data-field="name" data-formatter=createLinkToTest>
+                        Name
+                    </th>
+                    <th scope="col" data-sortable="true" data-field="tests_count">Tests Count</th>
+                    <th scope="col" data-sortable="true" data-formatter="lgFormatter">Runners</th>
+                    <th scope="col" data-field="lg_type">Actions</th>
+                </template>
+            </Table-Card>
+        </div>
+    </div>
+
+    <Table-Card
+            @register="register"
+            instance_name="table_results"
+
+            header='Results'
+            :adaptive-height="true"
+            :table_attributes="{
+                'data-url': '/api/v1/security/results/{{ tools.session_project.get() }}',
+                id: 'results_table',
+                'data-query-params': 'testResultsqueryParams'
+            }"
+            container_classes="mt-3"
+    >
+        <template #actions>
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-secondary btn-icon btn-icon__purple">
+                    <i class="icon__18x18 icon-delete"></i>
+                </button>
+            </div>
+        </template>
+        <template #table_headers>
+            <th scope="col" data-checkbox="true"></th>
+            <th data-visible="false" data-field="id">index</th>
+            <th scope="col" data-sortable="true" data-field="test_name"
+                data-formatter="tableFormatters.reports_test_name_button">
+                Name
+            </th>
+            <th scope="col" data-sortable="true" data-field="start_date">Start</th>
+            <th scope="col" data-sortable="true" data-field="duration">Duration</th>
+            <th scope="col" data-sortable="true" data-field="findings">Findings</th>
+            <th scope="col" data-sortable="true" data-field="false_positive">False Positive</th>
+            <th scope="col" data-sortable="true" data-field="excluded">Excl</th>
+            <th scope="col" data-sortable="true" data-field="info">Info</th>
+            <th scope="col" data-sortable="true" data-field="tags" data-formatter="reportsTagFormatter">
+                Tag
+            </th>
+            <th scope="col" data-field="test_status.status"
+                data-formatter="tableFormatters.reports_status_formatter">
+                Status
+            </th>
+        </template>
+    </Table-Card>
+
+    {% include 'security:app/modal.html' %}
+</div>
