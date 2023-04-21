@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import make_response, request
 from flask_restful import Resource
-
+from tools import auth
 from ...models.results import SecurityResultsDAST
 
 
@@ -14,6 +14,12 @@ class API(Resource):
     def __init__(self, module):
         self.module = module
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.view"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": True, "viewer": True},
+        }
+    })
     def get(self, project_id: int, result_id: int):
         obj = SecurityResultsDAST.query.filter(
             SecurityResultsDAST.project_id == project_id,

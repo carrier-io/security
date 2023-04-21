@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import request, make_response
 from flask_restful import Resource
 from sqlalchemy import and_, or_, desc
-
+from tools import auth
 from ...models.reports import SecurityReport
 from ...models.results import SecurityResultsDAST
 
@@ -16,6 +16,12 @@ class API(Resource):
     def __init__(self, module):
         self.module = module
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.view"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": True, "viewer": True},
+        }
+    })
     def get(self, project_id: int):
         reports = []
         args = request.args
@@ -37,12 +43,14 @@ class API(Resource):
                      SecurityResultsDAST.scan_type == scan_type)
             ).order_by(sort_rule).limit(limit_).offset(offset_).all()
         else:
-            filter_ = and_(SecurityResultsDAST.project_id == project_id, SecurityResultsDAST.scan_type == scan_type,
+            filter_ = and_(SecurityResultsDAST.project_id == project_id,
+                           SecurityResultsDAST.scan_type == scan_type,
                            or_(SecurityResultsDAST.project_name.like(f"%{search_}%"),
                                SecurityResultsDAST.app_name.like(f"%{search_}%"),
                                SecurityResultsDAST.scan_type.like(f"%{search_}%"),
                                SecurityResultsDAST.environment.like(f"%{search_}%")))
-            res = SecurityResultsDAST.query.filter(filter_).order_by(sort_rule).limit(limit_).offset(offset_).all()
+            res = SecurityResultsDAST.query.filter(filter_).order_by(sort_rule).limit(
+                limit_).offset(offset_).all()
             total = SecurityResultsDAST.query.filter(filter_).order_by(sort_rule).count()
         for each in res:
             each_json = each.to_json()
@@ -51,12 +59,19 @@ class API(Resource):
             reports.append(each_json)
         return make_response({"total": total, "rows": reports}, 200)
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.delete"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": False, "viewer": False},
+        }
+    })
     def delete(self, project_id: int):
         args = request.args
         # project = Project.get_or_404(project_id)
         project = self.module.context.rpc_manager.call.project_get_or_404(project_id)
         for each in SecurityReport.query.filter(
-                and_(SecurityReport.project_id == project.id, SecurityReport.report_id.in_(args["id[]"]))
+                and_(SecurityReport.project_id == project.id,
+                     SecurityReport.report_id.in_(args["id[]"]))
         ).order_by(SecurityReport.id.asc()).all():
             each.delete()
         for each in SecurityResultsDAST.query.filter(
@@ -65,26 +80,37 @@ class API(Resource):
             each.delete()
         return {"message": "deleted"}
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.create"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": True, "viewer": False},
+        }
+    })
     def post(self, project_id: int):
         args = request.json
         self.module.context.rpc_manager.call.project_get_or_404(project_id)
 
         # TODO move sast/dast quota checks to a new endpoint, which will be triggered before the scan
         if args["scan_type"].lower() == 'sast':
-            if not self.module.context.rpc_manager.call.project_check_quota(project_id, 'sast_scans'):
+            if not self.module.context.rpc_manager.call.project_check_quota(project_id,
+                                                                            'sast_scans'):
                 return make_response(
-                    {"Forbidden": "The number of sast scans allowed in the project has been exceeded"},
+                    {
+                        "Forbidden": "The number of sast scans allowed in the project has been exceeded"},
                     400
                 )
         elif args["scan_type"].lower() == 'dast':
-            if not self.module.context.rpc_manager.call.project_check_quota(project_id, 'dast_scans'):
+            if not self.module.context.rpc_manager.call.project_check_quota(project_id,
+                                                                            'dast_scans'):
                 return make_response(
-                    {"Forbidden": "The number of dast scans allowed in the project has been exceeded"},
+                    {
+                        "Forbidden": "The number of dast scans allowed in the project has been exceeded"},
                     400
                 )
 
         # monkey patch security results getter
-        report = SecurityResultsDAST.query.filter(SecurityResultsDAST.project_id == project_id).order_by(
+        report = SecurityResultsDAST.query.filter(
+            SecurityResultsDAST.project_id == project_id).order_by(
             desc(SecurityResultsDAST.id)).first()
 
         upd = dict(

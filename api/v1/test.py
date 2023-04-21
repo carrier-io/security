@@ -3,7 +3,7 @@ from typing import Union
 from flask import request
 from flask_restful import Resource
 from pylon.core.tools import log
-
+from tools import auth
 from ...utils import run_test, parse_test_data
 from ...models.tests import SecurityTestsDAST
 
@@ -22,7 +22,12 @@ class API(Resource):
     #     # test = SecurityResultsDAST.query.filter(SecurityResultsDAST(project_id, test_id)).first()
     #     # test = test.to_json()
     #     return make_response(None, 204)
-
+    @auth.decorators.check_api({
+        "permissions": ["security.app.tests.edit"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": True, "viewer": False},
+        }
+    })
     def put(self, project_id: int, test_id: Union[int, str]):
         """ Update test data """
         run_test_ = request.json.pop('run_test', False)
@@ -37,7 +42,8 @@ class API(Resource):
             return errors, 400
             # return make_response(json.dumps(errors, default=lambda o: o.dict()), 400)
 
-        test_query = SecurityTestsDAST.query.filter(SecurityTestsDAST.get_api_filter(project_id, test_id))
+        test_query = SecurityTestsDAST.query.filter(
+            SecurityTestsDAST.get_api_filter(project_id, test_id))
 
         schedules = test_data.pop('scheduling', [])
 
@@ -53,6 +59,12 @@ class API(Resource):
 
         return test.to_json(), 200
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.tests.create"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": True, "viewer": False},
+        }
+    })
     def post(self, project_id: int, test_id: Union[int, str]):
         """ Run test """
         test = SecurityTestsDAST.query.filter(

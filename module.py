@@ -46,6 +46,12 @@ class Module(module.ModuleModel):
             "Security",
             kind="holder",
             location="left",
+            permissions={
+                "permissions": ["security"],
+                "recommended_roles": {
+                    "default": {"admin": True, "editor": True, "viewer": True},
+                }
+            }
         )
         theme.register_subsection(
             "security", "app",
@@ -54,6 +60,12 @@ class Module(module.ModuleModel):
             kind="slot",
             prefix="security_app_",
             weight=5,
+            permissions={
+                "permissions": ["security.app"],
+                "recommended_roles": {
+                    "default": {"admin": True, "editor": True, "viewer": True},
+                }
+            }
         )
 
         theme.register_page(
@@ -62,6 +74,12 @@ class Module(module.ModuleModel):
             title="Test Results",
             kind="slot",
             prefix="security_app_results_",
+            permissions={
+                "permissions": ["security.app.reports"],
+                "recommended_roles": {
+                    "default": {"admin": True, "editor": True, "viewer": True},
+                }
+            }
         )
 
         shared.job_type_rpcs.add('security_dast')

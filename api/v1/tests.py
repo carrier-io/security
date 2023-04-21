@@ -9,7 +9,7 @@ from ...models.tests import SecurityTestsDAST
 from ...models.thresholds import SecurityThresholds
 from ...utils import parse_test_data, run_test
 
-from tools import api_tools
+from tools import api_tools, auth
 
 
 class API(Resource):
@@ -20,6 +20,12 @@ class API(Resource):
     def __init__(self, module):
         self.module = module
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.tests.view"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": True, "viewer": True},
+        }
+    })
     def get(self, project_id: int):
         total, res = api_tools.get(project_id, request.args, SecurityTestsDAST)
         rows = []
@@ -45,8 +51,15 @@ class API(Resource):
             r.update(set(*i))
         return r
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.tests.delete"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": False, "viewer": False},
+        }
+    })
     def delete(self, project_id: int):
-        project = self.module.context.rpc_manager.call.project_get_or_404(project_id=project_id)
+        project = self.module.context.rpc_manager.call.project_get_or_404(
+            project_id=project_id)
         try:
             delete_ids = list(map(int, request.args["id[]"].split(',')))
         except TypeError:
@@ -71,6 +84,12 @@ class API(Resource):
 
         return {'ids': delete_ids}, 200
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.tests.create"],
+        "recommended_roles": {
+            "default": {"admin": True, "editor": True, "viewer": False},
+        }
+    })
     def post(self, project_id: int):
         """
         Post method for creating and running test

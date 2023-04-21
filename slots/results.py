@@ -9,7 +9,7 @@ class Slot:
 
     @slot('content')
     @auth.decorators.check_slot(
-        [],
+        {"permissions": ["security.app.results"]},
         access_denied_reply=theme.access_denied_part
     )
     def content(self, context, slot, payload):
@@ -26,6 +26,10 @@ class Slot:
         return theme.empty_content
 
     @slot('scripts')
+    @auth.decorators.check_slot(
+        {"permissions": ["security.app.results"]},
+        access_denied_reply=theme.access_denied_part
+    )
     def scripts(self, context, slot, payload):
         log.info('slot: [%s] || payload: [%s]', slot, payload)
         result_id = payload.request.args.get('result_id')
@@ -39,6 +43,10 @@ class Slot:
         return ''
 
     @slot('styles')
+    @auth.decorators.check_slot(
+        {"permissions": ["security.app.results"]},
+        access_denied_reply=theme.access_denied_part
+    )
     def styles(self, context, slot, payload):
         log.info('slot: [%s] || payload: [%s]', slot, payload)
         with context.app.app_context():
