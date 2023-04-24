@@ -9,6 +9,9 @@ from pylon.core.tools import log
 from sqlalchemy import and_, func
 
 from ...models.results import SecurityResultsDAST
+from tools import auth
+
+
 # from ...models.security_reports import SecurityReport
 
 
@@ -16,9 +19,13 @@ class API(Resource):
     url_params = [
         '<int:project_id>/<int:test_id>',
     ]
+
     def __init__(self, module):
         self.module = module
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.tests.create"],
+    })
     def put(self, project_id: int, test_id: int):
         args = request.json
         test_status = args.get("test_status")
@@ -32,7 +39,8 @@ class API(Resource):
             )
         else:
             _filter = and_(
-                SecurityResultsDAST.project_id == project_id, SecurityResultsDAST.test_uid == test_id
+                SecurityResultsDAST.project_id == project_id,
+                SecurityResultsDAST.test_uid == test_id
             )
         test = SecurityResultsDAST.query.filter(_filter).first()
         test.set_test_status(test_status)
@@ -45,12 +53,14 @@ class API(Resource):
 
             write_test_run_logs_to_minio_bucket(test)
 
-        return make_response({"message": f"Status for test_id={test_id} of project_id: {project_id} updated"}, 200)
+        return make_response(
+            {"message": f"Status for test_id={test_id} of project_id: {project_id} updated"},
+            200)
 
 
 def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='log.txt'):
-
-    loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get('url'))  # todo: check if self.module.context.config returns the same
+    loki_settings_url = urlparse(current_app.config["CONTEXT"].settings.get('loki', {}).get(
+        'url'))  # todo: check if self.module.context.config returns the same
     if loki_settings_url:
         #
         task_key = test.test_id
@@ -73,7 +83,8 @@ def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='lo
             enc = 'utf-8'
             file_output = BytesIO()
 
-            file_output.write(f'Test {test.test_name} (id={test.test_id}) run log:\n'.encode(enc))
+            file_output.write(
+                f'Test {test.test_name} (id={test.test_id}) run log:\n'.encode(enc))
 
             unpacked_values = []
             for i in results['data']['result']:
@@ -81,7 +92,8 @@ def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='lo
                     ii.append(i['stream']['level'])
                     unpacked_values.append(ii)
             for unix_ns, log_line, level in sorted(unpacked_values, key=lambda x: int(x[0])):
-                timestamp = datetime.fromtimestamp(int(unix_ns) / 1e9).strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = datetime.fromtimestamp(int(unix_ns) / 1e9).strftime(
+                    "%Y-%m-%d %H:%M:%S")
                 file_output.write(
                     f'{timestamp}\t{level}\t{log_line}\n'.encode(enc)
                 )

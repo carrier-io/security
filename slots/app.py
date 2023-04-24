@@ -23,7 +23,7 @@ class Slot:  # pylint: disable=E1101,R0903
 
     @web.slot('security_app_content')
     @auth.decorators.check_slot(
-        [],
+        {"permissions": ["security.app"]},
         access_denied_reply=theme.access_denied_part
     )
     def content(self, context, slot, payload):
@@ -34,6 +34,10 @@ class Slot:  # pylint: disable=E1101,R0903
             )
 
     @web.slot('security_app_scripts')
+    @auth.decorators.check_slot(
+        {"permissions": ["security.app"]},
+        access_denied_reply=theme.access_denied_part
+    )
     def scripts(self, context, slot, payload):
         log.info('slot: [%s] || payload: [%s]', slot, payload)
         with context.app.app_context():
@@ -42,6 +46,10 @@ class Slot:  # pylint: disable=E1101,R0903
             )
 
     @web.slot('security_app_styles')
+    @auth.decorators.check_slot(
+        {"permissions": ["security.app"]},
+        access_denied_reply=theme.access_denied_part
+    )
     def styles(self, context, slot, payload):
         log.info('slot: [%s] || payload: [%s]', slot, payload)
         with context.app.app_context():

@@ -1,6 +1,6 @@
 from flask import make_response
 from flask_restful import Resource
-
+from tools import auth
 from ...models.tests import SecurityTestsDAST
 from ...utils import run_test
 
@@ -13,6 +13,9 @@ class API(Resource):
     def __init__(self, module):
         self.module = module
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.tests.create", "security.app.tests.edit"],
+    })
     def post(self, security_results_dast_id: int):
         """
         Post method for re-running test

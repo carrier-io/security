@@ -6,6 +6,7 @@ from flask import make_response
 from flask_restful import Resource
 from pylon.core.tools import log
 from pylon.core.seeds.minio import MinIOHelper
+from tools import auth
 
 
 class API(Resource):
@@ -16,8 +17,10 @@ class API(Resource):
     def __init__(self, module):
         self.module = module
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.view"],
+    })
     def get(self, project_id: int):
-
         key = flask.request.args.get("task_id", None)
         result_key = flask.request.args.get("result_test_id", None)
         if not key or not result_key:  # or key not in state:
@@ -39,7 +42,8 @@ class API(Resource):
         logs_limit = 10000000000
 
         return make_response(
-            {"websocket_url": f"{websocket_base_url}?query={logs_query}&start={logs_start}&limit={logs_limit}"},
+            {
+                "websocket_url": f"{websocket_base_url}?query={logs_query}&start={logs_start}&limit={logs_limit}"},
             200
         )
 

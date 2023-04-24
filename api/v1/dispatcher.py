@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from sqlalchemy import and_
 
-
+from tools import auth
 from ...models.tests import SecurityTestsDAST
 from ...models.thresholds import SecurityThresholds
 from flask import request, make_response
@@ -15,10 +15,14 @@ class API(Resource):
     def __init__(self, module):
         self.module = module
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.view"],
+    })
     def get(self, project_id: int, seed: str):
         """ Get config for seed """
         args = request.args
-        project = self.module.context.rpc_manager.call.project_get_or_404(project_id=project_id)
+        project = self.module.context.rpc_manager.call.project_get_or_404(
+            project_id=project_id)
 
         test_type = seed.split("_")[0]
         test_id = seed.split("_")[1]

@@ -2,10 +2,11 @@ import hashlib
 
 from flask import request, abort, make_response
 from flask_restful import Resource
-from sqlalchemy import and_, func, or_, asc
+from sqlalchemy import and_, or_, asc
 
-from ...models.reports import SecurityReport
+from tools import auth
 from ...models.details import SecurityDetails
+from ...models.reports import SecurityReport
 from ...models.results import SecurityResultsDAST
 
 
@@ -18,6 +19,9 @@ class API(Resource):
     def __init__(self, module):
         self.module = module
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.view"],
+    })
     def get(self, project_id: int, test_id: int):
 
         args = request.args
@@ -33,10 +37,14 @@ class API(Resource):
         results = []
         for issue in issues:
             _res = issue.to_json()
-            _res["details"] = SecurityDetails.query.filter_by(id=_res["details"]).first().details
+            _res["details"] = SecurityDetails.query.filter_by(
+                id=_res["details"]).first().details
             results.append(_res)
         return {"total": len(results), "rows": results}, 200
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.view"],
+    })
     def put(self, project_id: int, test_id: int):
         args = request.json
         issues = args.get('issues_id')
@@ -84,15 +92,20 @@ class API(Resource):
         results.update_findings_counts()
         return make_response(accept_message, 204)
 
+    @auth.decorators.check_api({
+        "permissions": ["security.app.reports.view"],
+    })
     def post(self, project_id: int, *args, **kvargs):
         finding_db = None
         for finding in request.json:
             md5 = hashlib.md5(finding["details"].encode("utf-8")).hexdigest()
             hash_id = SecurityDetails.query.filter(
-                and_(SecurityDetails.project_id == project_id, SecurityDetails.detail_hash == md5)
+                and_(SecurityDetails.project_id == project_id,
+                     SecurityDetails.detail_hash == md5)
             ).first()
             if not hash_id:
-                hash_id = SecurityDetails(detail_hash=md5, project_id=project_id, details=finding["details"])
+                hash_id = SecurityDetails(detail_hash=md5, project_id=project_id,
+                                          details=finding["details"])
                 hash_id.insert()
             # Verify issue is false_positive or ignored
             finding["details"] = hash_id.id
@@ -112,7 +125,8 @@ class API(Resource):
                 SecurityReport.issue_hash == finding['issue_hash'])).first()
             if issue:
                 finding['severity'] = issue.severity
-            if not (finding.get("false_positive") == 1 or finding.get("excluded_finding") == 1):
+            if not (finding.get("false_positive") == 1 or finding.get(
+                    "excluded_finding") == 1):
                 # todo: query sum from db?
                 issues = SecurityReport.query.filter(
                     and_(SecurityReport.project_id == project_id,
@@ -120,7 +134,8 @@ class API(Resource):
                          or_(SecurityReport.status == "False_Positive",
                              SecurityReport.status == "Ignored")
                          )).all()
-                false_positive = sum([1 for issue in issues if issue.status == "False_Positive"])
+                false_positive = sum(
+                    [1 for issue in issues if issue.status == "False_Positive"])
                 excluded_finding = sum([1 for issue in issues if issue.status == "Ignored"])
 
                 finding["status"] = "False_Positive" if false_positive > 0 else "Not_defined"
