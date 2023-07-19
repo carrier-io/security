@@ -170,7 +170,12 @@ var apiActions = {
         $("#security_test_save").removeClass("disabled updating")
         $("#security_test_save_and_run").removeClass("disabled updating")
     },
-
+    results_delete: ids => {
+        const url = `${apiActions.base_url('results')}?` + $.param({"id[]": ids})
+        fetch(url, {
+            method: 'DELETE'
+        }).then(response => response.ok && vueVm.registered_components.table_results?.table_action('refresh'))
+    },
 
 }
 
@@ -195,5 +200,13 @@ $(document).on('vue_init', () => {
         ).join(',')
         ids_to_delete && apiActions.delete(ids_to_delete)
     })
+
+    $('#delete_results').on('click', e => {
+        const ids_to_delete = vueVm.registered_components.table_results?.table_action('getSelections').map(
+            item => item.id
+        ).join(',')
+        ids_to_delete && apiActions.results_delete(ids_to_delete)
+    })
+
     $("#application_tests_table").on('all.bs.table', initTooltips)
 })
