@@ -1,19 +1,3 @@
-const severityOptions = [
-    {name: 'critical', className: 'colored-select-red'},
-    {name: 'high', className: 'colored-select-orange'},
-    {name: 'medium', className: 'colored-select-yellow'},
-    {name: 'low', className: 'colored-select-green'},
-    {name: 'info', className: 'colored-select-blue'},
-]
-
-const statusOptions = [
-    {name: 'valid', className: 'colored-select-red'},
-    {name: 'false positive', className: 'colored-select-blue'},
-    {name: 'ignored', className: 'colored-select-darkblue'},
-    {name: 'not defined', className: 'colored-select-notdefined'},
-]
-
-
 const TableCardFindings = {
     ...TableCard,
     mounted() {
@@ -50,6 +34,19 @@ const TableCardFindings = {
             loadingFilters: false,
             loadingDelete: false,
             updatedFilter: null,
+            severityOptions: [
+                {name: 'critical', className: 'colored-select-red'},
+                {name: 'high', className: 'colored-select-orange'},
+                {name: 'medium', className: 'colored-select-yellow'},
+                {name: 'low', className: 'colored-select-green'},
+                {name: 'info', className: 'colored-select-blue'},
+            ],
+            statusOptions: [
+                {name: 'valid', className: 'colored-select-red'},
+                {name: 'false positive', className: 'colored-select-blue'},
+                {name: 'ignored', className: 'colored-select-darkblue'},
+                {name: 'not defined', className: 'colored-select-notdefined'},
+            ],
             // tableData,
         }
     },
@@ -101,8 +98,8 @@ const TableCardFindings = {
                     </select>
                 `
             })
-            window.findings_formatter_severity = selectpicker_formatter(severityOptions)
-            window.findings_formatter_status = selectpicker_formatter(statusOptions)
+            window.findings_formatter_severity = selectpicker_formatter(this.severityOptions)
+            window.findings_formatter_status = selectpicker_formatter(this.statusOptions)
             window.findings_eventhandler = {
                 'change .selectpicker': this.handleSelectpickerChange
             }
