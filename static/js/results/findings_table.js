@@ -1,17 +1,17 @@
-const severityOptions = [
-    {name: 'critical', className: 'colored-select-red'},
-    {name: 'high', className: 'colored-select-orange'},
-    {name: 'medium', className: 'colored-select-yellow'},
-    {name: 'low', className: 'colored-select-green'},
-    {name: 'info', className: 'colored-select-blue'},
-]
-
-const statusOptions = [
-    {name: 'valid', className: 'colored-select-red'},
-    {name: 'false positive', className: 'colored-select-blue'},
-    {name: 'ignored', className: 'colored-select-darkblue'},
-    {name: 'not defined', className: 'colored-select-notdefined'},
-]
+// const severityOptions = [
+//     {name: 'critical', className: 'colored-select-red'},
+//     {name: 'high', className: 'colored-select-orange'},
+//     {name: 'medium', className: 'colored-select-yellow'},
+//     {name: 'low', className: 'colored-select-green'},
+//     {name: 'info', className: 'colored-select-blue'},
+// ]
+//
+// const statusOptions = [
+//     {name: 'valid', className: 'colored-select-red'},
+//     {name: 'false positive', className: 'colored-select-blue'},
+//     {name: 'ignored', className: 'colored-select-darkblue'},
+//     {name: 'not defined', className: 'colored-select-notdefined'},
+// ]
 
 
 const TableCardFindings = {
@@ -165,4 +165,3 @@ const TableCardFindings = {
 }
 
 register_component('TableCardFindings', TableCardFindings)
-
