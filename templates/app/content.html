@@ -14,11 +14,14 @@
                 }"
                 container_classes="h-100"
             >
-                <template #actions>
+                <template #actions="{master}">
                     <div class="d-flex justify-content-end">
                         <button type="button" class="btn btn-basic btn-icon mr-2" id="create_test"
                                 data-toggle="modal" data-target="#createApplicationTest">
-                            <i class="icon__18x18 icon-create-element icon__white"></i>
+                            <i class="icon__18x18 icon-create-element"></i>
+                        </button>
+                        <button type="button" @click="master.table_action('refresh')" class="btn btn-secondary btn-icon btn-icon__purple mr-2" id="filter_test">
+                            <i class="icon__18x18 icon-refresh"></i>
                         </button>
                         <button type="button" class="btn btn-secondary btn-icon btn-icon__purple" id="delete_test">
                             <i class="icon__18x18 icon-delete"></i>
@@ -62,11 +65,15 @@
                     }"
                     container_classes="h-100"
             >
-                <template #actions>
+                <template #actions="{master}">
                     <div class="d-flex justify-content-end">
                         <button type="button" class="btn btn-basic btn-icon mr-2"
                                 data-toggle="modal" data-target="#createApplicationTest">
-                            <i class="icon__18x18 icon-create-element icon__white"></i>
+                            <i class="icon__18x18 icon-create-element"></i>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-icon btn-icon__purple mr-2"
+                                @click="master.table_action('refresh')">
+                            <i class="icon__18x18 icon-refresh"></i>
                         </button>
                         <button type="button" class="btn btn-secondary btn-icon btn-icon__purple">
                             <i class="icon__18x18 icon-delete"></i>
@@ -100,8 +107,12 @@
             }"
             container_classes="mt-3"
     >
-        <template #actions>
+        <template #actions="{master}">
             <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-secondary btn-icon btn-icon__purple mr-2"
+                        @click="master.table_action('refresh')">
+                    <i class="icon__18x18 icon-refresh"></i>
+                </button>
                 <button id="delete_results" type="button" class="btn btn-secondary btn-icon btn-icon__purple">
                     <i class="icon__18x18 icon-delete"></i>
                 </button>

@@ -31,7 +31,7 @@ var tableFormatters = {
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
                     <ul class="dropdown-menu">
-                        <li class="dropdown-menu_item dropdown-item d-flex align-items-center">
+                        <!--<li class="dropdown-menu_item dropdown-item d-flex align-items-center">
                             <span class="w-100 font-h5"><i class="fas fa-share-alt mr-2"></i>Integrate with</span>
                             <i class="fa fa-sort-down"
                                style="transform: rotate(270deg)"
@@ -50,7 +50,7 @@ var tableFormatters = {
                                     <span class="w-100 font-h5">Test UID</span>
                                 </li>
                             </ul>
-                        </li>
+                        </li>-->
                         <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
                             id="test_settings"
                         >
@@ -63,7 +63,7 @@ var tableFormatters = {
                         </li>
                     </ul>
                 </div>
-                
+
             </div>
         `
     },
@@ -73,7 +73,7 @@ var tableFormatters = {
     },
     application_urls(value, row, index) {
         const enable_tooltip = JSON.stringify(value).length > 42  // because 42
-        return `<div 
+        return `<div
                     style="
                         max-width: 240px;
                         text-overflow: ellipsis;
@@ -81,7 +81,7 @@ var tableFormatters = {
                         overflow: hidden;
                     "
                     ${enable_tooltip && 'data-toggle="infotip"'}
-                    data-placement="top" 
+                    data-placement="top"
                     title='${value}'
                 >${value}</div>`
     },
