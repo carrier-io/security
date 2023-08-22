@@ -21,11 +21,12 @@ class SecurityResultsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixi
     # TODO: excluded = ignored
     id = Column(Integer, primary_key=True)
     project_id = Column(Integer, unique=False, nullable=False)
-    # engagement it belongs to 
+    # engagement it belongs to
     engagement = Column(String(64), nullable=True, default=None)
     #
     test_id = Column(Integer, unique=False)
     test_uid = Column(String(128), unique=False)
+    build_id = Column(String(128), unique=True)
     test_name = Column(String(128), unique=False)
     start_date = Column(DateTime, default=dt.utcnow)
     duration = Column(String(128), unique=False)  # todo: remove?

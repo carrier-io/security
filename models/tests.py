@@ -43,6 +43,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
     schedules = Column(ARRAY(Integer), nullable=True, default=[])
 
     results_test_id = Column(Integer)
+    build_id = Column(String(128), unique=True)
 
     def add_schedule(self, schedule_data: dict, commit_immediately: bool = True):
         schedule_data['test_id'] = self.id
@@ -102,7 +103,6 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
         if output == "dusty":
             from flask import current_app
             global_dast_settings = dict()
-            loki_settings = current_app.config["CONTEXT"].settings["loki"]
             global_dast_settings["max_concurrent_scanners"] = 1
 
             # if "toolreports" in self.reporting:
@@ -221,11 +221,12 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                     log.warning(f'Cannot find reporter config rpc for {reporter_name}')
 
             reporters_config["centry_loki"] = {
-                "url": loki_settings["url"],
+                "url": "{{secret.loki_host}}",
                 "labels": {
-                    "project_id": str(self.project_id),
-                    "task_key": str(self.id),
-                    "result_test_id": str(self.results_test_id),
+                    "project": str(self.project_id),
+                    "build_id": str(self.build_id),
+                    "report_id": str(self.results_test_id),
+                    "hostname": "dusty"
                 },
             }
             reporters_config["centry_status"] = {
@@ -368,7 +369,10 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
         cc_env_vars = {
             "RABBIT_HOST": vault_client.unsecret("{{secret.rabbit_host}}"),
             "RABBIT_USER": vault_client.unsecret("{{secret.rabbit_user}}"),
-            "RABBIT_PASSWORD": vault_client.unsecret("{{secret.rabbit_password}}")
+            "RABBIT_PASSWORD": vault_client.unsecret("{{secret.rabbit_password}}"),
+            "REPORT_ID": str(self.results_test_id),
+            "build_id": str(self.build_id),
+            "project_id": str(self.project_id),
         }
         concurrency = 1
 

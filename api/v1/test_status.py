@@ -60,7 +60,7 @@ def write_test_run_logs_to_minio_bucket(test: SecurityResultsDAST, file_name='lo
     result_key = test.id
     project_id = test.project_id
     build_id = test.build_id
-    # test_name = test.test_name
+    test_name = test.test_name
     #
     logs_query = "{" + f'report_id="{result_key}",project="{project_id}",build_id="{build_id}"' + "}"
     #
