@@ -45,6 +45,7 @@ class API(Resource):
                 ).first().to_json(
                     exclude_fields=("id", "project_id", "test_name", "test_uid")
                 )
+                thresholds = thresholds['params']
             except AttributeError:
                 thresholds = {}
             return test.configure_execution_json(args.get("type"), thresholds=thresholds)

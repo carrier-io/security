@@ -53,44 +53,7 @@
             </Table-Card>
         </div>
         <div class="flex-item-2">
-            <Table-Card
-                    @register="register"
-                    instance_name="table_thresholds"
-
-                    header='Thresholds'
-                    :table_attributes="{
-{#                        'data-url': '/api/v1/security/tests/{{ tools.session_project.get() }}',#}
-                        'data-page-size': 5,
-                        id: 'thresholds_table'
-                    }"
-                    container_classes="h-100"
-            >
-                <template #actions="{master}">
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-secondary btn-icon btn-icon__purple mr-2"
-                                data-toggle="modal" data-target="#createApplicationTest">
-                            <i class="icon__18x18 icon-create-element"></i>
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-icon btn-icon__purple mr-2"
-                                @click="master.table_action('refresh')">
-                            <i class="icon__18x18 icon-refresh"></i>
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-icon btn-icon__purple">
-                            <i class="icon__18x18 icon-delete"></i>
-                        </button>
-                    </div>
-                </template>
-                <template #table_headers>
-                    <th scope="col" data-checkbox="true"></th>
-                    <th data-visible="false" data-field="id">index</th>
-                    <th scope="col" data-sortable="true" data-field="name" data-formatter=createLinkToTest>
-                        Name
-                    </th>
-                    <th scope="col" data-sortable="true" data-field="tests_count">Tests Count</th>
-                    <th scope="col" data-sortable="true" data-formatter="lgFormatter">Runners</th>
-                    <th scope="col" data-field="lg_type">Actions</th>
-                </template>
-            </Table-Card>
+            {% include 'security:app/threshold.html' %}
         </div>
     </div>
 

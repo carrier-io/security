@@ -108,14 +108,6 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             # if "toolreports" in self.reporting:
             #     global_dast_settings["save_intermediates_to"] = "/tmp/intermediates"
 
-            # Thresholds
-            tholds = {}
-            if thresholds and any(int(thresholds[key]) > -1 for key in thresholds.keys()):
-
-                for key, value in thresholds.items():
-                    if int(value) > -1:
-                        tholds[key.capitalize()] = int(value)
-
             #
             # Scanners
             #
@@ -168,7 +160,15 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                 except Empty:
                     log.warning(f'Cannot find processor config rpc for {processor_name}')
 
-            processing_config["quality_gate"] = {
+            tholds = {}
+            for threshold in thresholds:
+                if int(threshold['value']) > -1:
+                    tholds[threshold['name'].capitalize()] = {
+                        'comparison': threshold['comparison'],
+                        'value': int(threshold['value']),
+                    }
+
+            processing_config["quality_gate_sast"] = {
                 "thresholds": tholds
             }
 
