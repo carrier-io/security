@@ -43,7 +43,7 @@ class API(Resource):
         test = SecurityResultsDAST.query.filter(_filter).first()
         test.set_test_status(test_status)
 
-        if test_status['status'].lower().startswith('finished'):
+        if test_status['status'].lower() in ['finished', 'passed', 'failed']:
             test.update_severity_counts()
             test.update_status_counts()
             test.update_findings_counts()

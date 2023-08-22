@@ -221,7 +221,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                     log.warning(f'Cannot find reporter config rpc for {reporter_name}')
 
             reporters_config["centry_loki"] = {
-                "url": vault_client.unsecret("{{secret.loki_host}}"),
+                "url": f'{vault_client.unsecret("{{secret.loki_host}}")}/loki/api/v1/push',
                 "labels": {
                     "project": str(self.project_id),
                     "build_id": str(self.build_id),
