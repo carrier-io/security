@@ -1,6 +1,6 @@
 const LogsApp = {
     delimiters: ['[[', ']]'],
-    props: ['project_id', 'test_id', 'result_test_id'],
+    props: ['project_id', 'report_id'],
     data() {
         return {
             websocket_api_url: '',
@@ -9,43 +9,39 @@ const LogsApp = {
             retry_interval: undefined,
             connection_retries: 5,
             connection_retry_timeout: 2000,
-            logs: []
+            logs: [],
+            tags_mapper: []
         }
 
     },
     mounted() {
-      this.websocket_api_url = `/api/v1/security/loki_url/${this.project_id}/?task_id=${this.test_id}&result_test_id=${this.result_test_id}`
+      console.log("Logs: mounted()")
+      this.websocket_api_url = `/api/v1/security/loki_url/${this.project_id}/?result_id=${this.report_id}`
       this.init_websocket()
     },
-    // updated() {
-    //     var item = $("#logs-body");
-    //     item.scrollTop(item.prop("scrollHeight"));
-    // },
     computed: {
         reversedLogs: function () {
-            return this.logs.slice().reverse()
+            return this.logs.reverse()
         },
     },
     template: `
-        <div class="card card-12 mb-5">
+        <div class="card card-12 pb-4 card-table">
             <div class="card-header">
                 <div class="row">
                     <div class="col-2"><h3>Logs</h3></div>
                 </div>
             </div>
             <div class="card-body card-table">
-              <div id="logs-body" class="card-body overflow-auto pt-0 pl-3">
-                  <ul class="list-group">
-                      <li v-for="line in reversedLogs" class="list-group-item">
-                          <div style="word-break: break-all; white-space: pre-wrap;">[[ line ]]</div>
-                      </li>
-                  </ul>
-              </div>
+              <div class="container-logs">
+                    <table id="tableLogs" class="table-logs">
+                    </table>
+                </div>
             </div>
         </div>
     `,
     methods: {
         init_websocket() {
+            console.log("Logs: init_websocket()")
             fetch(this.websocket_api_url, {
                 method: 'GET'
             }).then(response => {
@@ -67,15 +63,49 @@ const LogsApp = {
         },
         on_websocket_message(message) {
             if (message.type !== 'message') {
-                console.warn('Unknown message from socket', message)
+                console.log('Unknown message', message)
                 return
             }
 
             const data = JSON.parse(message.data)
+            const logsTag = data.streams.map(logTag => {
+                return logTag.stream.hostname;
+            })
 
-            data.streams.forEach(stream_item => {
-                stream_item.values.forEach(message_item => {
-                    this.logs.push(`${stream_item.stream.level} : ${message_item[1]}`)
+            const uniqTags = [...new Set(logsTag)].filter(tag => !!(tag))
+            uniqTags.forEach(tag => {
+                if(!this.tags_mapper.includes(tag)) {
+                    this.tags_mapper.push(tag)
+                }
+            })
+            const tagColors = [
+                '#f89033',
+                '#e127ff',
+                '#2BD48D',
+                '#2196C9',
+                '#6eaecb',
+                '#385eb0',
+                '#7345fc',
+                '#94E5B0',
+            ]
+
+            data.streams.forEach((stream_item, streamIndex) => {
+                stream_item.values.forEach((message_item, messageIndex) => {
+                    const d = new Date(Number(message_item[0])/1000000)
+                    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    const timestamp = d.toLocaleString("en-GB", {timeZone: tz})
+                    const indexColor = this.tags_mapper.indexOf(stream_item.stream.hostname);
+                    const coloredTag = `<td><span style="color: ${tagColors[indexColor]}" class="ml-4">[${stream_item.stream.hostname}]</span></td>`
+                        const message = message_item[1]
+                        const log_level = stream_item.stream.level
+                        const coloredText = `${coloredTag}<td><span class="colored-log colored-log__${log_level}">${log_level}</span></td>`
+                        const row = `<tr><td>${timestamp}</td>${coloredText}<td class="log-message__${streamIndex}-${messageIndex}"></td></tr>`
+                        $('#tableLogs').append(row)
+                        $(`.log-message__${streamIndex}-${messageIndex}`).append(`<plaintext>${message}`)
+                    // }
+                    const elem = document.querySelector('.container-logs');
+                    elem.scrollTop = elem.scrollHeight;
+
                 })
             })
         },
@@ -94,7 +124,4 @@ const LogsApp = {
     }
 }
 
-// Vue.createApp({
-//     components: LogsApp
-// }).mount('#logs')
-vueApp.component('logsapp', LogsApp)
+register_component('logsapp', LogsApp)

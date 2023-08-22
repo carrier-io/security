@@ -151,10 +151,10 @@
 {#    {{ template_slot("security_artifacts_table", payload=config) | safe }}#}
 
 {% else %}
-    <LogsApp
-      :project_id="{{ test_data.project_id }}"
-      :test_id="{{ test_data.test_id }}"
-      :result_test_id='{{ test_data.id }}'
-    ></LogsApp>
-
+    <logsapp
+        :project_id="{{ test_data.project_id }}"
+        :report_id='{{ test_data.id }}'
+        instance_name="dast_logs"
+        @register="register"
+    ></logsapp>
 {% endif %}
