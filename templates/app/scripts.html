@@ -1,8 +1,8 @@
 <script src="{{ url_for('theme.static', filename='js/tags.js') }}"></script>
 <script src="{{ url_for('security.static', filename='js/app/modal.js') }}"></script>
 <script src="{{ url_for('security.static', filename='js/app/main.js') }}"></script>
-<script src="{{ url_for('security_sast.static', filename='js/thresholds.js') }}"></script>
-<script src="{{ url_for('security_sast.static', filename='js/vendor/axios.min.js') }}"></script>
+<script src="{{ url_for('security.static', filename='js/thresholds.js') }}"></script>
+<script src="{{ url_for('security.static', filename='js/vendor/axios.min.js') }}"></script>
 
 {{ template_slot('params_table_scripts') | safe }}
 {{ template_slot('thresholds_params_scripts') | safe }}
