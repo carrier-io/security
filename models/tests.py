@@ -30,7 +30,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
     project_name = Column(String(64), nullable=False)
     test_uid = Column(String(64), unique=True, nullable=False)
 
-    name = Column(String(128), nullable=False)
+    name = Column(String(128), nullable=False, unique=True)
     description = Column(String(256), nullable=True, unique=False)
 
     urls_to_scan = Column(ARRAY(String(128)), nullable=False)

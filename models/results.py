@@ -80,7 +80,7 @@ class SecurityResultsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixi
 
     @property
     def bucket_name(self):
-        return f'run--{self.id}'
+        return str(self.test_name).replace("_", "").replace(" ", "").lower()
 
     def get_minio_client(self) -> MinioClient:
         return MinioClient(self.rpc.call.project_get_or_404(self.project_id))
