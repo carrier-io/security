@@ -19,12 +19,16 @@ class API(Resource):
     def __init__(self, module):
         self.module = module
 
+    def _calcualte_limit(self, limit, total):
+        return total if limit == 'All' or limit == 0 else limit
+
     @auth.decorators.check_api({
         "permissions": ["security.app.reports.view"],
     })
     def get(self, project_id: int, test_id: int):
-
         args = request.args
+        limit_ = args.get("limit")
+        offset_ = args.get("offset")
 
         filter_ = [
             SecurityReport.project_id == project_id,
@@ -33,7 +37,17 @@ class API(Resource):
 
         if args.get("status"):
             filter_.append(SecurityReport.status.ilike(args["status"]))
-        issues = SecurityReport.query.filter(*filter_).order_by(asc(SecurityReport.id))
+
+        if args.get("sort"):
+            sort_rule = getattr(getattr(SecurityReport, args["sort"]), args["order"])()
+        else:
+            sort_rule = SecurityReport.id.desc()
+
+        total = SecurityReport.query.filter(*filter_).count()
+        issues = SecurityReport.query.filter(*filter_).order_by(sort_rule)\
+                .limit(self._calcualte_limit(limit_, total))\
+                .offset(offset_)
+
         results = []
         for issue in issues:
             _res = issue.to_json()
