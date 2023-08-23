@@ -358,8 +358,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
         # job_type = "sast"
 
         # container = f"getcarrier/{job_type}:{CURRENT_RELEASE}"
-        # container = f"getcarrier/sast:latest"
-        container = f"getcarrier/dast:latest"
+        container = f"getcarrier/dast:beta-2.0"
         parameters = {
             "cmd": f"run -b centry:{job_type}_{self.test_uid} -s {job_type}",
             "GALLOPER_URL": vault_client.unsecret("{{secret.galloper_url}}"),
