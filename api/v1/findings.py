@@ -54,7 +54,7 @@ class API(Resource):
             _res["details"] = SecurityDetails.query.filter_by(
                 id=_res["details"]).first().details
             results.append(_res)
-        return {"total": len(results), "rows": results}, 200
+        return {"total": total, "rows": results}, 200
 
     @auth.decorators.check_api({
         "permissions": ["security.app.reports.view"],
