@@ -352,7 +352,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                 }
             }
             #
-            descriptor = context.module_manager.descriptor["security"]
+            descriptor = context.module_manager.descriptor.security
             #
             base_config = descriptor.config.get("base_config", None)
             if base_config is None:
