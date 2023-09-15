@@ -12,13 +12,15 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
+import copy
+
 from json import dumps
 from queue import Empty
 from typing import List, Union
 
 from sqlalchemy import Column, Integer, String, ARRAY, JSON, and_
 
-from tools import rpc_tools, db, db_tools, constants, VaultClient
+from tools import rpc_tools, db, db_tools, constants, VaultClient, context
 
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 
@@ -312,7 +314,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             #                 "rp_launch_name": "dast"
             #             }
 
-            dusty_config = {
+            computed_config = {
                 "config_version": 2,
                 "suites": {
                     "dast": {
@@ -349,6 +351,18 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                     }
                 }
             }
+            #
+            descriptor = context.module_manager.descriptor["security"]
+            #
+            base_config = descriptor.config.get("base_config", None)
+            if base_config is None:
+                base_config = {}
+            else:
+                base_config = copy.deepcopy(base_config)
+            #
+            dusty_config = {}
+            dusty_config.update(base_config)
+            dusty_config.update(computed_config)
             #
             log.info("Resulting config: %s", dusty_config)
             #
