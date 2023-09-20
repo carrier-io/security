@@ -104,6 +104,15 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
         vault_client = VaultClient.from_project(self.project_id)
         if output == "dusty":
             from flask import current_app
+
+            descriptor = context.module_manager.descriptor.security
+            #
+            base_config = descriptor.config.get("base_config", None)
+            if base_config is None:
+                base_config = {}
+            else:
+                base_config = copy.deepcopy(base_config)
+
             global_dast_settings = dict()
             global_dast_settings["max_concurrent_scanners"] = 1
 
@@ -114,7 +123,12 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             # Scanners
             #
 
-            scanners_config = dict()
+            scanners_config = descriptor.config.get("base_config_scanners", None)
+            if scanners_config is None:
+                scanners_config = {}
+            else:
+                scanners_config = copy.deepcopy(scanners_config)
+            #
             for scanner_name in self.integrations.get('scanners', []):
                 try:
                     config_name, config_data = \
@@ -147,7 +161,12 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             # Processing
             #
 
-            processing_config = dict()
+            processing_config = descriptor.config.get("base_config_processing", None)
+            if processing_config is None:
+                processing_config = {}
+            else:
+                processing_config = copy.deepcopy(processing_config)
+            #
             for processor_name in self.integrations.get("processing", []):
                 try:
                     config_name, config_data = \
@@ -207,7 +226,12 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             # Reporters
             #
 
-            reporters_config = dict()
+            reporters_config = descriptor.config.get("base_config_reporters", None)
+            if reporters_config is None:
+                reporters_config = {}
+            else:
+                reporters_config = copy.deepcopy(reporters_config)
+            #
             for reporter_name in self.integrations.get('reporters', []):
                 try:
                     config_name, config_data = \
@@ -351,14 +375,6 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                     }
                 }
             }
-            #
-            descriptor = context.module_manager.descriptor.security
-            #
-            base_config = descriptor.config.get("base_config", None)
-            if base_config is None:
-                base_config = {}
-            else:
-                base_config = copy.deepcopy(base_config)
             #
             dusty_config = {}
             dusty_config.update(base_config)
