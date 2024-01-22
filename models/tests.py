@@ -101,12 +101,12 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
             output='cc',
             thresholds={}
     ):
+        descriptor = context.module_manager.descriptor.security
+        #
         vault_client = VaultClient.from_project(self.project_id)
         if output == "dusty":
             from flask import current_app
 
-            descriptor = context.module_manager.descriptor.security
-            #
             base_config = descriptor.config.get("base_config", None)
             if base_config is None:
                 base_config = {}
@@ -389,7 +389,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
 
         # container = f"getcarrier/{job_type}:{CURRENT_RELEASE}"
         # container = f"getcarrier/sast:latest"
-        container = f"getcarrier/dast:latest"
+        container = descriptor.config.get("dast_image", "getcarrier/dast:latest")
         parameters = {
             "cmd": f"run -b centry:{job_type}_{self.test_uid} -s {job_type}",
             "GALLOPER_URL": vault_client.unsecret("{{secret.galloper_url}}"),
