@@ -52,6 +52,11 @@ var tableFormatters = {
                             </ul>
                         </li>-->
                         <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
+                            id="test_command"
+                        >
+                            <i class="fas fa-link mr-2"></i><span class="w-100 font-h5">Show run command</span>
+                        </li>
+                        <li class="dropdown-menu_item dropdown-item d-flex align-items-center"
                             id="test_settings"
                         >
                             <i class="fas fa-cog mr-2"></i><span class="w-100 font-h5">Settings</span>
@@ -96,7 +101,16 @@ var tableFormatters = {
             $('#modal_title').text('Edit Application Test')
             $('#security_test_save').text('Update')
             $('#security_test_save_and_run').text('Update And Start')
+        },
 
+        "click #test_command": function (e, value, row, index) {
+            url = `${window.location.origin}/api/v1/security/dispatcher/${row.project_id}/dast_${row.test_uid}?type=docker`
+            fetch(url)
+              .then((response) => response.text())
+              .then((text) => {
+                navigator.clipboard.writeText(text.trim().slice(1, -1).replaceAll('\\"', '"'));
+                showNotify("SUCCESS", "Copied run command to clipboard")
+              });
         },
 
         "click #test_delete": function (e, value, row, index) {
