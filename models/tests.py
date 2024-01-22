@@ -408,11 +408,16 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
         concurrency = 1
 
         if output == "docker":
+            #
+            control_tower = descriptor.config.get(
+                "control_tower_image", f"getcarrier/control_tower:{constants.CURRENT_RELEASE}"
+            )
+            #
             return f"docker run --rm -i -t " \
                    f"-e project_id={self.project_id} " \
                    f"-e galloper_url={vault_client.unsecret('{{secret.galloper_url}}')} " \
                    f"-e token=\"{vault_client.unsecret('{{secret.auth_token}}')}\" " \
-                   f"getcarrier/control_tower:{constants.CURRENT_RELEASE} " \
+                   f"{control_tower} " \
                    f"-tid {self.test_uid}"
         if output == "cc":
             channel = self.scan_location
