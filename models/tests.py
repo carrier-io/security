@@ -269,6 +269,35 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                 "project_id": str(self.project_id),
                 "test_id": str(self.results_test_id),
             }
+
+            reporters_config["junit"] = {
+                "file": "/tmp/{project_name}_{testing_type}_{scan_type}_{build_id}_report.xml",
+            }
+
+            reporters_config["centry_junit_report"] = {
+                "url": vault_client.unsecret(
+                    "{{secret.galloper_url}}",
+                ),
+                "token": vault_client.unsecret(
+                    "{{secret.auth_token}}",
+                ),
+                "project_id": str(self.project_id),
+                "bucket": "dast",
+                "object": f"{self.test_uid}_junit_report.xml",
+            }
+
+            reporters_config["centry_quality_gate_report"] = {
+                "url": vault_client.unsecret(
+                    "{{secret.galloper_url}}",
+                ),
+                "token": vault_client.unsecret(
+                    "{{secret.auth_token}}",
+                ),
+                "project_id": str(self.project_id),
+                "bucket": "dast",
+                "object": f"{self.test_uid}_quality_gate_report.json",
+            }
+
             # TODO: check valid reports names
             # for report_type in self.reporting:
             #     if report_type == "toolreports":
@@ -418,7 +447,7 @@ class SecurityTestsDAST(db_tools.AbstractBaseMixin, db.Base, rpc_tools.RpcMixin)
                    f"-e galloper_url={vault_client.unsecret('{{secret.galloper_url}}')} " \
                    f"-e token=\"{vault_client.unsecret('{{secret.auth_token}}')}\" " \
                    f"{control_tower} " \
-                   f"-tid {self.test_uid}"
+                   f"-tid {self.test_uid} -qg true"
         if output == "cc":
             channel = self.scan_location
             if channel == "Carrier default config" or channel.strip() == "":
